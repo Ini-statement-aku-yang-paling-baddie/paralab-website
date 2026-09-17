@@ -41,7 +41,22 @@ import { actions, useAppState, useProject } from "@/lib/paralab/store";
 import { bacaSatuSensor } from "@/hooks/use-sensors";
 import { PanelPemantauan } from "@/components/paralab/PanelPemantauan";
 import { UjiSampelStabilitas } from "@/components/paralab/UjiSampelStabilitas";
+import { NextValidationCard } from "@/components/paralab/NextValidationCard";
+import { ModelApiError, postJson } from "@/lib/paralab/api";
+import { toF4Request, type F4Recommendation } from "@/lib/paralab/f4-adapter";
 import { unduhScaleUpBrief } from "@/lib/paralab/scaleup";
+
+/**
+ * Payload F3 contoh untuk demo F4. Sengaja statis: UI belum mengumpulkan
+ * kondisi proses dan checkpoint yang dibutuhkan F3 sungguhan.
+ */
+const SAMPLE_F3 = {
+  decision: "flag_high_risk",
+  risk_band: "high",
+  confidence: "high",
+  data_origin: "synthetic_demo",
+  f2_screening: { derived_features: { electrolyte_thickener_risk: "high" } },
+};
 
 type Search = { batch?: number | undefined };
 
@@ -76,6 +91,9 @@ function JurnalDetail() {
   const proyek = useProject(id);
   const { user } = useAppState();
   const [aktif, setAktif] = useState(search.batch ?? 1);
+  const [f4Recommendation, setF4Recommendation] = useState<F4Recommendation | null>(null);
+  const [f4Loading, setF4Loading] = useState(false);
+  const [f4Error, setF4Error] = useState<string | null>(null);
 
   if (!proyek) {
     return (
@@ -143,6 +161,26 @@ function JurnalDetail() {
           : h,
       ),
     }));
+  }
+
+  async function muatLangkahValidasi() {
+    if (f4Loading) return;
+    setF4Loading(true);
+    setF4Error(null);
+    try {
+      const response = await postJson<F4Recommendation>(
+        "/v1/f4/next-validation",
+        toF4Request(SAMPLE_F3, null),
+      );
+      setF4Recommendation(response);
+    } catch (cause) {
+      setF4Recommendation(null);
+      setF4Error(
+        cause instanceof ModelApiError ? cause.message : "Gateway model tidak dapat dihubungi.",
+      );
+    } finally {
+      setF4Loading(false);
+    }
   }
 
   function selesaikanBatch() {
@@ -489,6 +527,16 @@ function JurnalDetail() {
             </LineChart>
           </ResponsiveContainer>
         </Card>
+      </div>
+
+      <NextValidationCard recommendation={f4Recommendation} loading={f4Loading} error={f4Error} />
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <GhostButton onClick={muatLangkahValidasi}>
+          {f4Loading ? "Memuat langkah validasi…" : "Muat langkah validasi (demo F4)"}
+        </GhostButton>
+        <span className="text-xs text-muted-foreground">
+          Mengirim payload F3 contoh ke gateway model. Bukan penilaian stabilitas formal.
+        </span>
       </div>
 
       <UjiSampelStabilitas proyek={proyek} batch={batch} peneliti={nama} />
