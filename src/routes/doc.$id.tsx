@@ -409,6 +409,7 @@ function DokumenEditor() {
       </main>
 
       <VoiceLog
+        selectedTrialId={proyek.id + "-batch-" + batch.nomor}
         onTerapkan={(h) => {
           const waktu = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
           const baris: string[] = [];
