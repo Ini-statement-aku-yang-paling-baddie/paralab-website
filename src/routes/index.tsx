@@ -174,7 +174,7 @@ function Beranda() {
           <div className="lg:col-span-6">
             <p className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-brand">
               <span className="h-px w-8 bg-brand" aria-hidden="true" />
-              Riset formulasi, tim R&amp;D Paragon
+              Riset formulasi, tim R&amp;D Vinara
             </p>
             <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.12] tracking-tight text-foreground sm:text-5xl">
               Asisten riset yang paham ritme kerja laboratorium.
@@ -378,7 +378,7 @@ function Beranda() {
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>paralab.ai, ruang kerja penelitian dan pengembangan produk.</p>
-          <p>Prototipe internal tim R&amp;D Paragon</p>
+          <p>Prototipe internal tim R&amp;D Vinara</p>
         </div>
       </footer>
     </main>

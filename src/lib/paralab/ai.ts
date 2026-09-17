@@ -11,6 +11,7 @@ import {
   type TargetParam,
 } from "./data";
 import { EXTRA_PROJECTS, KATEGORI_NAMA, kategoriDef, targetDariId } from "./catalog";
+import { RULE_VERSION } from "./kontrak";
 
 export type Brief = {
   judul: string;
@@ -139,7 +140,17 @@ export function susunFormula(brief: Brief): Ingredient[] {
   return normalisasi(list);
 }
 
-export type Clash = { a: string; b: string; tingkat: "tinggi" | "sedang"; alasan: string };
+export type Clash = {
+  a: string;
+  b: string;
+  tingkat: "tinggi" | "sedang";
+  alasan: string;
+  ruleId: string;
+  ruleVersion: string;
+  severity: "blocked" | "warning";
+  sourceId: string;
+  perluTinjauanManusia: boolean;
+};
 
 export function deteksiClash(list: Ingredient[]): Clash[] {
   const ids = new Set(list.map((b) => b.id));
@@ -151,29 +162,111 @@ export function deteksiClash(list: Ingredient[]): Clash[] {
         b: list.find((b) => b.id === rule.b)!.name,
         tingkat: rule.tingkat,
         alasan: rule.alasan,
+        ruleId: rule.ruleId,
+        ruleVersion: rule.ruleVersion,
+        severity: rule.severity,
+        sourceId: rule.sourceId,
+        perluTinjauanManusia: rule.perluTinjauanManusia,
       });
     }
   }
   return hasil;
 }
 
+/**
+ * Batas kadar prototipe, satu rule satu ID agar dapat ditelusuri.
+ * Angka ini masih perlu diverifikasi terhadap PerBPOM sebelum dipakai nyata.
+ */
+const BATAS_KADAR: {
+  id: string;
+  ruleId: string;
+  sourceId: string;
+  maks: number;
+  acuan: string;
+}[] = [
+  { id: "retinol", ruleId: "WEB-LIMIT-001", sourceId: "WEB-RULESRC-101", maks: 0.3, acuan: "PerBPOM 17/2022, lampiran bahan dibatasi" },
+  { id: "salicylic", ruleId: "WEB-LIMIT-002", sourceId: "WEB-RULESRC-102", maks: 2, acuan: "PerBPOM 17/2022, leave-on" },
+  { id: "phenoxy", ruleId: "WEB-LIMIT-003", sourceId: "WEB-RULESRC-103", maks: 1, acuan: "PerBPOM 17/2022, pengawet" },
+  { id: "aha", ruleId: "WEB-LIMIT-004", sourceId: "WEB-RULESRC-104", maks: 10, acuan: "PerBPOM 17/2022, eksfolian" },
+  { id: "kojic", ruleId: "WEB-LIMIT-005", sourceId: "WEB-RULESRC-105", maks: 2, acuan: "PerBPOM 17/2022, pencerah" },
+  { id: "niacin_sunscreen", ruleId: "WEB-LIMIT-006", sourceId: "WEB-RULESRC-106", maks: 10, acuan: "PerBPOM 17/2022, UV filter" },
+  { id: "zinc_oxide", ruleId: "WEB-LIMIT-007", sourceId: "WEB-RULESRC-107", maks: 25, acuan: "PerBPOM 17/2022, UV filter" },
+];
+
+export type PelanggaranKadar = {
+  bahan: Ingredient;
+  maks: number;
+  ruleId: string;
+  ruleVersion: string;
+  sourceId: string;
+  acuan: string;
+};
+
+/**
+ * Status skrining mengikuti kosakata F2 (architecture v5 §5.1), bukan vonis.
+ * `clear_for_current_screening` berarti tidak ada rule prototipe yang aktif,
+ * bukan formula dinyatakan halal, aman, atau lolos BPOM.
+ */
+export type StatusSkrining =
+  | "clear_for_current_screening"
+  | "warning"
+  | "blocked"
+  | "unknown";
+
+export const LABEL_SKRINING: Record<StatusSkrining, string> = {
+  clear_for_current_screening: "tidak ada rule aktif",
+  warning: "perlu diperiksa",
+  blocked: "melanggar batas prototipe",
+  unknown: "belum dapat dipetakan",
+};
+
 export function ringkasKepatuhan(list: Ingredient[]) {
   const syubhat = list.filter((b) => b.halal === "syubhat");
   const haram = list.filter((b) => b.halal === "haram");
   const dibatasi = list.filter((b) => b.bpom === "dibatasi");
-  const melanggar = list.filter((b) => {
-    if (b.id === "retinol") return b.percent > 0.3;
-    if (b.id === "salicylic") return b.percent > 2;
-    if (b.id === "phenoxy") return b.percent > 1;
-    if (b.id === "aha") return b.percent > 10;
-    if (b.id === "kojic") return b.percent > 2;
-    if (b.id === "niacin_sunscreen") return b.percent > 10;
-    if (b.id === "zinc_oxide") return b.percent > 25;
-    return false;
-  });
-  const status: "halal" | "perlu verifikasi" | "tidak lolos" =
-    haram.length > 0 ? "tidak lolos" : syubhat.length > 0 ? "perlu verifikasi" : "halal";
-  return { status, syubhat, haram, dibatasi, melanggar };
+
+  const pelanggaran: PelanggaranKadar[] = [];
+  for (const b of list) {
+    const batas = BATAS_KADAR.find((x) => x.id === b.id);
+    if (batas && b.percent > batas.maks) {
+      pelanggaran.push({
+        bahan: b,
+        maks: batas.maks,
+        ruleId: batas.ruleId,
+        ruleVersion: RULE_VERSION,
+        sourceId: batas.sourceId,
+        acuan: batas.acuan,
+      });
+    }
+  }
+  const melanggar = pelanggaran.map((p) => p.bahan);
+
+  // Bahan tanpa INCI atau tanpa nomor CAS belum dapat dipetakan dengan aman.
+  // F2 menyebut keadaan ini `unknown`, dan `unknown` wajib menghentikan forecast.
+  const takDikenal = list.filter((b) => !b.inci || b.inci === "-" || b.cas === "-");
+
+  const status: StatusSkrining =
+    haram.length > 0 || melanggar.length > 0
+      ? "blocked"
+      : takDikenal.length > 0
+        ? "unknown"
+        : syubhat.length > 0 || dibatasi.length > 0
+          ? "warning"
+          : "clear_for_current_screening";
+
+  return {
+    status,
+    label: LABEL_SKRINING[status],
+    ruleVersion: RULE_VERSION,
+    syubhat,
+    haram,
+    dibatasi,
+    melanggar,
+    pelanggaran,
+    takDikenal,
+    /** Warning, blocked, dan unknown semuanya menuntut tanda tangan manusia. */
+    perluTandaTanganManusia: status !== "clear_for_current_screening",
+  };
 }
 
 export function prediksiParameter(list: Ingredient[], targets: TargetParam[]) {

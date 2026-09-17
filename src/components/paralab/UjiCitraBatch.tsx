@@ -12,6 +12,8 @@ import {
 } from "recharts";
 import { Camera, FlaskRound, ImagePlus, Trash2 } from "lucide-react";
 import { analisaPiksel, type AnalisaCitra } from "@/lib/paralab/prediksi";
+import { BATAS_CV } from "@/lib/paralab/kontrak";
+import { BandProvenance, DaftarBatas } from "./BandProvenance";
 import { GhostButton, PrimaryButton } from "./ui";
 
 export const JENIS_UJI_CITRA = [
@@ -86,8 +88,17 @@ export function UjiCitraBatch({ nomor, onTemuan }: { nomor: number; onTemuan: (t
         <Camera className="size-4 text-brand" /> Pengujian berbasis citra batch ke-{nomor}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Unggah foto sampel, citra mikroskop, atau dokumentasi uji stabilitas. Sistem membaca tekstur dan sebaran kecerahan citra, lalu temuannya dapat dimasukkan langsung ke umpan balik penutupan praktikum.
+        Unggah foto sampel, citra mikroskop, atau dokumentasi uji stabilitas. Sistem menghitung statistik
+        tekstur dan sebaran kecerahan citra, lalu <strong>mengusulkan</strong> temuan. Peneliti yang
+        memutuskan apakah temuan itu masuk ke umpan balik penutupan praktikum.
       </p>
+
+      <div className="mt-3">
+        <BandProvenance
+          lapis="heuristik"
+          tambahan="Angka di bawah berasal dari statistik piksel, bukan klasifikasi model CV terlatih."
+        />
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <select
@@ -188,6 +199,8 @@ export function UjiCitraBatch({ nomor, onTemuan }: { nomor: number; onTemuan: (t
           </div>
         ))}
       </div>
+
+      <DaftarBatas judul="Batas analisis citra" batas={BATAS_CV} />
     </div>
   );
 }

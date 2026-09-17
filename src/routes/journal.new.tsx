@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, Copy, FileText, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleHelp, Copy, FileText, Plus, Sparkles, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/paralab/AppShell";
 import { Card, CardTitle, Field, GhostButton, Pill, PrimaryButton, inputClass } from "@/components/paralab/ui";
 import {
@@ -15,6 +15,8 @@ import {
 } from "@/lib/paralab/data";
 import { PARAM_GRUP, PARAM_LIBRARY, paramKeTarget } from "@/lib/paralab/catalog";
 import { PanelSustain } from "@/components/paralab/PanelSustain";
+import { BandProvenance, JejakRule } from "@/components/paralab/BandProvenance";
+import { cekDomain } from "@/lib/paralab/f3";
 import { DialogStok, StokPill } from "@/components/paralab/StokBahan";
 import { PILIHAN_STANDAR, standarTerpilih, type PilihanStandar } from "@/lib/paralab/standar";
 import {
@@ -28,7 +30,6 @@ import {
   cariJurnalMirip,
   deteksiClash,
   kontribusiBiaya,
-  kurvaStabilitas,
   prediksiParameter,
   ringkasKepatuhan,
   susunFormula,
@@ -101,7 +102,7 @@ function JurnalBaruPage() {
   const kepatuhan = useMemo(() => ringkasKepatuhan(bahan), [bahan]);
   const prediksi = useMemo(() => prediksiParameter(bahan, targets), [bahan, targets]);
   const hpp = useMemo(() => hitungHpp(bahan), [bahan]);
-  const stabilitas = useMemo(() => kurvaStabilitas(bahan), [bahan]);
+  const domainDraf = useMemo(() => cekDomain(brief.kategori, bahan), [brief.kategori, bahan]);
   const biaya = useMemo(() => kontribusiBiaya(bahan), [bahan]);
 
   const totalPersen = bahan.reduce((t, b) => t + b.percent, 0);
@@ -399,8 +400,21 @@ function JurnalBaruPage() {
               </Card>
 
               <Card>
-                <CardTitle title="Status halal dan BPOM" />
-                <Pill variant={kepatuhan.status === "halal" ? "aman" : kepatuhan.status === "perlu verifikasi" ? "waspada" : "bahaya"}>{kepatuhan.status}</Pill>
+                <CardTitle
+                  title="Skrining halal dan batas kadar"
+                  sub={"Rule prototipe versi " + kepatuhan.ruleVersion + ", bukan persetujuan BPOM atau MUI"}
+                />
+                <Pill
+                  variant={
+                    kepatuhan.status === "clear_for_current_screening"
+                      ? "aman"
+                      : kepatuhan.status === "blocked"
+                        ? "bahaya"
+                        : "waspada"
+                  }
+                >
+                  {kepatuhan.label}
+                </Pill>
                 <ul className="mt-3 space-y-2 text-xs text-muted-foreground">
                   {kepatuhan.syubhat.map((b) => (
                     <li key={b.id}>
@@ -412,7 +426,25 @@ function JurnalBaruPage() {
                       Kadar {b.name} melewati batas BPOM. {b.batasBpom}
                     </li>
                   ))}
-                  {kepatuhan.syubhat.length === 0 && kepatuhan.melanggar.length === 0 && <li>Seluruh bahan tersertifikasi dan berada di bawah batas regulasi.</li>}
+                  {kepatuhan.pelanggaran.map((p) => (
+                    <li key={p.ruleId} className="text-danger">
+                      Kadar {p.bahan.name} {p.bahan.percent}% melewati batas prototipe {p.maks}%.{" "}
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {p.ruleId} · v{p.ruleVersion} · {p.sourceId}
+                      </span>
+                    </li>
+                  ))}
+                  {kepatuhan.takDikenal.map((b) => (
+                    <li key={b.id} className="text-warning">
+                      {b.name} belum dapat dipetakan ke INCI atau CAS kanonis, tinjauan manusia wajib.
+                    </li>
+                  ))}
+                  {kepatuhan.status === "clear_for_current_screening" && (
+                    <li>
+                      Tidak ada rule prototipe yang aktif pada formula ini. Ini bukan pernyataan halal,
+                      aman, atau lolos registrasi.
+                    </li>
+                  )}
                 </ul>
               </Card>
             </div>
@@ -420,18 +452,25 @@ function JurnalBaruPage() {
 
           <div className="grid gap-5 lg:grid-cols-3">
             <Card>
-              <CardTitle title="Potensi clash bahan" sub="Interaksi yang perlu diantisipasi sebelum pencampuran" />
+              <CardTitle title="Pre-check kompatibilitas" sub="Pemeriksaan sisi klien sebelum F2 dijalankan server" />
+              <BandProvenance lapis="rule" />
               {clashes.length === 0 ? (
-                <p className="rounded-xl bg-success-soft px-3 py-3 text-sm font-medium text-success">Tidak ditemukan interaksi berisiko pada kombinasi ini.</p>
+                <p className="rounded-xl border border-border px-3 py-3 text-sm text-muted-foreground">
+                  Tidak ada rule pre-check yang aktif pada kombinasi ini. Ini bukan pernyataan formula aman.
+                </p>
               ) : (
                 <ul className="space-y-2">
-                  {clashes.map((c, i) => (
-                    <li key={i} className="rounded-xl border border-border p-3">
+                  {clashes.map((c) => (
+                    <li key={c.ruleId} className="rounded-xl border border-border p-3">
                       <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                        <AlertTriangle className={c.tingkat === "tinggi" ? "size-4 text-danger" : "size-4 text-warning"} />
+                        <AlertTriangle className={c.severity === "blocked" ? "size-4 text-danger" : "size-4 text-warning"} />
                         {c.a} dan {c.b}
+                        <span className="ml-auto text-[10px] font-bold uppercase text-muted-foreground">{c.severity}</span>
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">{c.alasan}</p>
+                      <p className="mt-1.5">
+                        <JejakRule ruleId={c.ruleId} ruleVersion={c.ruleVersion} sourceId={c.sourceId} />
+                      </p>
                     </li>
                   ))}
                 </ul>
@@ -439,19 +478,23 @@ function JurnalBaruPage() {
             </Card>
 
             <Card>
-              <CardTitle title="Prediksi kestabilan 28 hari" sub="Skor kestabilan pada tiga kondisi penyimpanan" />
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={stabilitas}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                  <XAxis dataKey="hari" tick={{ fontSize: 11 }} />
-                  <YAxis domain={[40, 100]} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey="suhu4" name="4 C" stroke="var(--chart-2)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="suhuRuang" name="Suhu ruang" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="suhu45" name="45 C" stroke="var(--chart-5)" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+              <CardTitle title="F3 Stability Sentinel" sub="Status deteksi dini risiko untuk formula ini" />
+              <BandProvenance lapis="prediksi" />
+              <div className="border-l-2 border-l-warning bg-warning-soft/40 p-3">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <CircleHelp className="size-4 text-warning" /> Abstain pada tahap draf
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  F3 membutuhkan baseline minggu 0 dan minimal satu checkpoint landmark yang sudah
+                  dikonfirmasi peneliti. Draf formula saja tidak cukup, jadi tidak ada forecast risiko
+                  yang diterbitkan di layar ini.
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  {domainDraf.didukung
+                    ? "Domain formula didukung. Setelah jurnal dibuat dan checkpoint direkam, panel F3 di halaman jurnal dapat dijalankan."
+                    : domainDraf.alasan}
+                </p>
+              </div>
             </Card>
 
             <Card>
@@ -532,11 +575,11 @@ function JurnalBaruPage() {
                     </div>
                     {p && (
                       <p className="mt-2 text-xs">
-                        <span className="text-muted-foreground">Prediksi AI </span>
+                        <span className="text-muted-foreground">Estimasi kasar </span>
                         <span className={p.lolos ? "font-semibold text-success" : "font-semibold text-warning"}>
                           {p.prediksi} {p.unit}
                         </span>
-                        <span className="text-muted-foreground"> · keyakinan {p.keyakinan}%</span>
+                        <span className="text-muted-foreground"> · heuristik penyusunan target, bukan keluaran F3</span>
                       </p>
                     )}
                     <p className="mt-1 text-[11px] text-muted-foreground">
@@ -597,7 +640,7 @@ function PratinjauDokumen({ brief, bahan, targets }: { brief: Brief; bahan: Ingr
   const batch = useMemo(() => buatJurnalKosong(brief, bahan, targets, 1), [brief, bahan, targets]);
   return (
     <div className="mx-auto max-h-[620px] max-w-[720px] overflow-hidden border border-border bg-card px-8 py-10 shadow-sm sm:px-14">
-      <img src={logoDark} alt="paralab.ai, Electronic Lab Notebook Paragon R&D" className="mb-5 h-12 w-auto max-w-[210px] object-contain object-left" />
+      <img src={logoDark} alt="paralab.ai, Electronic Lab Notebook Vinara R&D" className="mb-5 h-12 w-auto max-w-[210px] object-contain object-left" />
       <p className="text-right text-xs leading-5 text-foreground">Tanggal praktikum: {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}<br />Peneliti: Peneliti aktif</p>
       <div className="my-7 text-center">
         <p className="text-xs font-bold uppercase text-muted-foreground">Modul R&D Formulasi Kosmetik</p>

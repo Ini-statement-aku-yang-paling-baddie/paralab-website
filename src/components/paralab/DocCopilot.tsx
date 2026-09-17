@@ -48,9 +48,11 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
 
   if (t.includes("halal") || t.includes("bpom") || t.includes("regulasi")) {
     return (
-      "Status kepatuhan formula saat ini " +
-      patuh.status +
-      ". Bahan yang perlu verifikasi dokumen pemasok: " +
+      "Skrining rule prototipe versi " +
+      patuh.ruleVersion +
+      " menghasilkan status " +
+      patuh.label +
+      ". Ini bukan persetujuan BPOM atau halal. Bahan yang perlu verifikasi dokumen pemasok: " +
       (patuh.syubhat.length === 0 ? "tidak ada" : patuh.syubhat.map((b) => b.name).join(", ")) +
       ". Bahan melewati batas BPOM: " +
       (patuh.melanggar.length === 0 ? "tidak ada" : patuh.melanggar.map((b) => b.name).join(", ")) +
@@ -129,8 +131,8 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
     batch.bahan.length +
     " bahan dengan " +
     proyek.targets.length +
-    " parameter mutu. Status kepatuhan " +
-    patuh.status +
+    " parameter mutu. Skrining rule prototipe " +
+    patuh.label +
     ", potensi interaksi " +
     clash.length +
     ", parameter belum terisi " +
