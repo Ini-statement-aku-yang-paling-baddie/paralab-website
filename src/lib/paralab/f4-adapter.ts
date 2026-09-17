@@ -4,6 +4,8 @@
  * F4 selalu berupa langkah validasi/observasi yang wajib direview manusia.
  * Modul ini tidak boleh menurunkan atau mengarang tingkat risiko.
  */
+import type { F3Hasil } from "./f3";
+
 export type F4Request = {
   f3_forecast: Record<string, unknown>;
   checkpoint: Record<string, unknown> | null;
@@ -26,6 +28,43 @@ export function toF4Request(
   checkpoint: Record<string, unknown> | null,
 ): F4Request {
   return { f3_forecast: f3Forecast, checkpoint };
+}
+
+/**
+ * Menyusun request F4 dari hasil F3 yang benar-benar diterima website.
+ *
+ * Sumbernya `jalankanF3` (repository paralab-architecture), bukan payload contoh.
+ * Hasil yang sudah ditahan website — misalnya abstain karena ada bahan tak
+ * dikenal F2 — tetap dikirim sebagai abstain, supaya F4 tidak pernah menyusun
+ * langkah lanjutan di atas forecast yang sengaja tidak diterbitkan.
+ */
+export function toF4RequestFromF3(
+  hasil: F3Hasil,
+  checkpoint: Record<string, unknown> | null = null,
+): F4Request {
+  if (hasil.kind === "forecast") {
+    return {
+      f3_forecast: {
+        decision: hasil.keputusan,
+        risk_band: hasil.band,
+        confidence: hasil.keyakinan,
+        data_origin: hasil.dataOrigin,
+        f2_screening: hasil.screening,
+        limitations: hasil.batas,
+      },
+      checkpoint,
+    };
+  }
+
+  return {
+    f3_forecast: {
+      decision: "abstain_human_review_required",
+      reason: hasil.alasan,
+      f2_screening: hasil.screening,
+      limitations: hasil.batas,
+    },
+    checkpoint,
+  };
 }
 
 /**

@@ -34,10 +34,13 @@ export function PanelSentinel({
   proyek,
   batch,
   peneliti,
+  onHasil,
 }: {
   proyek: Project;
   batch: Batch;
   peneliti: string;
+  /** Meneruskan hasil F3 asli ke pemanggil, dipakai F4 sebagai sumber datanya. */
+  onHasil?: (hasil: F3Hasil) => void;
 }) {
   const [hasil, setHasil] = useState<F3Hasil | null>(null);
   const [memuat, setMemuat] = useState(false);
@@ -64,6 +67,7 @@ export function PanelSentinel({
     const r = await jalankanF3(proyek, batch);
     setHasil(r);
     setMemuat(false);
+    onHasil?.(r);
     actions.catat(
       peneliti,
       proyek.judul,
@@ -77,7 +81,7 @@ export function PanelSentinel({
             (r.keputusan === "flag_high_risk" ? "risiko tinggi ditandai" : "lanjutkan observasi")
         : "Batch " + batch.nomor + ": " + r.alasan,
     );
-  }, [proyek, batch, peneliti]);
+  }, [proyek, batch, peneliti, onHasil]);
 
   const siap = domain.didukung && observasi.siap && layanan !== "mati";
 
