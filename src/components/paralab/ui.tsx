@@ -130,18 +130,21 @@ export function PrimaryButton({
 export function GhostButton({
   children,
   onClick,
+  disabled,
   className = "",
 }: {
   children: ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
   className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={
-        "inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-secondary " +
+        "inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50 " +
         className
       }
     >

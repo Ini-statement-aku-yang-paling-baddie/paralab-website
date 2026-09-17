@@ -19,16 +19,6 @@ import { DOMAIN_DIDUKUNG } from "./kontrak";
 const BASE_URL =
   (import.meta.env["VITE_PARALAB_F3_URL"] as string | undefined) ?? "http://127.0.0.1:8000";
 
-/**
- * Header tambahan yang aman dikirim ke backend manapun.
- *
- * `ngrok-skip-browser-warning` hanya berarti sesuatu kalau BASE_URL adalah
- * tunnel ngrok gratis: tanpa ini, ngrok menyisipkan halaman peringatan HTML
- * sebelum permintaan API tembus, dan fetch akan gagal parse JSON. Backend
- * lain (Render, Cloud Run, lokal) mengabaikan header yang tidak dikenal ini.
- */
-const HEADER_TAMBAHAN = { "ngrok-skip-browser-warning": "true" } as const;
-
 /* ============================================================
    Kontrak permintaan, sama persis dengan ForecastRequest di api/app.py
    ============================================================ */
@@ -279,7 +269,7 @@ export async function jalankanF3(proyek: Project, batch: Batch): Promise<F3Hasil
   try {
     const res = await fetch(BASE_URL + "/v1/f3/forecasts", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...HEADER_TAMBAHAN },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(permintaan),
     });
     if (!res.ok) {
@@ -371,7 +361,7 @@ export async function cekKesehatanF3(): Promise<
   { ok: true; modelVersion: string; dataOrigin: string; cvStatus: string } | { ok: false }
 > {
   try {
-    const res = await fetch(BASE_URL + "/health", { headers: HEADER_TAMBAHAN });
+    const res = await fetch(BASE_URL + "/health");
     if (!res.ok) return { ok: false };
     const data = (await res.json()) as Record<string, string>;
     return {

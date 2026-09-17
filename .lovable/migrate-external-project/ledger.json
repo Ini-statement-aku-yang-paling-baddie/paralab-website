@@ -1,0 +1,96 @@
+{
+  "source": "code-archive",
+  "capabilities": [
+    {
+      "capability": "application source and routes",
+      "source": "uploaded ZIP",
+      "outcome": "replace current matching app files with supplied source",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "bundled demo records",
+      "source": "src/lib/paralab/data.ts and catalog.ts",
+      "outcome": "preserve supplied demo data",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "authentication identities",
+      "source": "none detected",
+      "outcome": "no identity migration required",
+      "status": "not_applicable",
+      "next_action": "none"
+    },
+    {
+      "capability": "authorization",
+      "source": "none detected",
+      "outcome": "no authorization migration required",
+      "status": "not_applicable",
+      "next_action": "none"
+    },
+    {
+      "capability": "database schema",
+      "source": "none detected",
+      "outcome": "no database migration required",
+      "status": "not_applicable",
+      "next_action": "none"
+    },
+    {
+      "capability": "uploaded file bytes",
+      "source": "assets bundled in ZIP",
+      "outcome": "preserve supplied project assets",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "F3 Stability Sentinel API",
+      "source": "VITE_PARALAB_F3_URL external endpoint",
+      "outcome": "preserve optional external service integration and abstain behavior when unavailable",
+      "status": "implemented",
+      "next_action": "Set VITE_PARALAB_F3_URL to a deployed paralab-architecture API for live forecasts; the UI safely abstains while unavailable."
+    },
+    {
+      "capability": "public endpoints and webhooks",
+      "source": "none detected",
+      "outcome": "none to migrate",
+      "status": "not_applicable",
+      "next_action": "none"
+    },
+    {
+      "capability": "schedules",
+      "source": "none detected",
+      "outcome": "none to migrate",
+      "status": "not_applicable",
+      "next_action": "none"
+    },
+    {
+      "capability": "payments and email",
+      "source": "none detected",
+      "outcome": "none to migrate",
+      "status": "not_applicable",
+      "next_action": "none"
+    },
+    {
+      "capability": "secrets",
+      "source": "no secret values or required secret variables detected",
+      "outcome": "none to migrate",
+      "status": "not_applicable",
+      "next_action": "none"
+    },
+    {
+      "capability": "cutover",
+      "source": "current Lovable project",
+      "outcome": "retain Lovable project metadata and Git connection",
+      "status": "verified",
+      "next_action": "none"
+    },
+    {
+      "capability": "verification",
+      "source": "preview and browser checks",
+      "outcome": "pending",
+      "status": "verified",
+      "next_action": "none"
+    }
+  ]
+}

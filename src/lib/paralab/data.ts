@@ -61,6 +61,22 @@ export type CitraStabilitasEntry = {
   histogram: { bin: string; jumlah: number }[];
 };
 
+export type GambarSpesimen = {
+  namaFile: string;
+  gambar: string;
+  waktu: string;
+};
+
+export type PrediksiStabilitas = {
+  dibuat: string;
+  shelfLifeBulan: number;
+  risikoPecah: number;
+  risikoPerubahanWarna: number;
+  risikoInteraksiAktif: number;
+  ringkasan: string;
+  mitigasi: string[];
+};
+
 export type BatchStatus = "draft" | "berjalan" | "pemantauan" | "selesai" | "dievaluasi";
 
 /**
@@ -107,6 +123,9 @@ export type Batch = {
   dokumenDiubah?: string | undefined;
   ujiSampelDimulai?: string | undefined;
   citraStabilitas?: CitraStabilitasEntry[] | undefined;
+  spesimenAkhir?: GambarSpesimen | undefined;
+  prediksiStabilitas?: PrediksiStabilitas | undefined;
+  timeframeSiap?: boolean | undefined;
 };
 
 export type BatchEvaluation = {

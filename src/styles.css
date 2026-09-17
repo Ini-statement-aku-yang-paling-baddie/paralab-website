@@ -303,6 +303,8 @@
 .table-clear th,
 .table-clear td {
   border-bottom: 1px solid var(--table-border-soft);
+  text-align: center;
+  vertical-align: middle;
 }
 
 .surface-card table thead th,

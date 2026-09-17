@@ -1,14 +1,34 @@
-# Welcome to your Lovable project
+# ParaLab AI Studio
+
+aku ingin workflow nya kamu rubah sedikit, dimana diawali dari halaman homepage dan login dashboard dari rnd yang sedang dilakukan oleh researcher lain / researcher saya, menggunakan three graph yang bisa liat juga batch batch dari rnd nya. aku ingin juga ada real time iot yang mendukung untuk rnd atau keadaan laboratorium, aku ingin sensornya lengkap.
+
+peneliti bisa melakukan tambah jurnal baru peneliti input data dan penelitian yang ingin dilakukan untuk developing produk baru setelah itu ai akan menghasilkan formula beserta grafik grafik fitur yang sudah aku sebutkan sebelumnya yang sudah pernah dilakukan oleh paragon sebelumnya atau benar benar formula yang works secara LLM /  jurnal. dimana hasil outputnya adalah resep / formula/ hpp/ perkiraan halal/haram ,apakah ada clash dll serta fitur fitur yang sudah saya lampirkan di prompt sebelumnya. output tersebut bisa di review ulang oleh researcher seperti mengurangkan atau melebihkan suatu formula, menambahkan zat, mengurangkan zat , menambah parameter produk yang diinginkan dll.
+
+apabila researcher setuju dengan summary diatas, ai akan membuat rancangan penelitian kosong , seperti output, tujuan penelitian, dll. aku ingin bentuknya seperti jurnal praktikum kosong. jurnal praktikum kosong adalah metode yang tetap mementingkan urgensi dari researcher, dimana researcher perlu menguji ulang resep yang telah dibuat oleh AI tersebut. setelah jurnal praktikum selesai dibuat, researcher bisa pencet tulisan RnD batch 1 selesai, setelah itu ai ditambah dengan feedback peneliti akan menganalisis dari jurnal praktikum tersebut kekurangan, rekomendasi, formula dan ide yang akhirnya membuat rancangan penelitian evaluasi untuk batch selanjutnya.
+
+apabila peneliti sudah menghasilkan penelitian yang sesuai dengan standard output dll, aku ingin ada fitur dimana peneliti bisa mengirimkan ke divisi terkait.
+
+aku ingin semua penelitiannya menggunakan parameter parameter yang ditangkap oleh sensor.
+
+aku ingin logbook laboratorium seperti electronik lab notebook bentuknya
+
+aku ingin kamu membuat custom ui/ux tanpa menggunakan emdash, dengan color theme paragon.
+
+dengan referensi design seperti gambar diatas, dan ide pada pdf diatas. aku ingin membuat halaman website yang ringan
+
+untuk namanya adalah paralab.ai
 
 This project was built with [Lovable](https://lovable.dev).
 
+**Live app**: https://smart-lab-assist.lovable.app
+
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/7a286d8a-f054-4fa4-9bcd-04f3bf73e9ed).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,53 +40,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
-
-## Menyambung ke arsitektur ParaLab
-
-Website ini **tidak** menghitung risiko stabilitas sendiri. Panel F3 Stability
-Sentinel memanggil API pada repository `paralab-architecture`, yang memuat model
-hash-verified dan menjalankan F2 di sisi server.
-
-Jalankan API-nya lebih dulu:
-
-```sh
-cd ../paralab-architecture
-PARALAB_CORS_ORIGINS="http://localhost:3000" \
-  .venv-f3/bin/python -m uvicorn api.app:app --host 127.0.0.1 --port 8000
-```
-
-Lalu salin `.env.example` menjadi `.env` bila alamatnya berbeda dari default
-`http://127.0.0.1:8000`.
-
-### Batas klaim yang dipegang website
-
-Aturan berikut disalin dari `docs/architecture/architecture_v5.md` dan berlaku di
-seluruh layar:
-
-1. **Tidak ada early pass.** Keluaran F3 hanya `flag_high_risk`,
-   `continue_observation`, atau abstain. Risiko rendah berarti lanjutkan
-   observasi, bukan formula dinyatakan aman.
-2. **Abstain lebih aman daripada menebak.** Bila kategori di luar domain yang
-   didukung, checkpoint belum lengkap, ada bahan yang tidak dikenali F2, atau
-   layanan F3 mati, panel menampilkan abstain beserta alasannya. Website tidak
-   pernah mengganti forecast dengan angka heuristik.
-3. **Manusia memegang keputusan akhir.** Sensor dan analisis citra hanya
-   mengusulkan nilai. Hasil uji dan checkpoint baru sah setelah peneliti menekan
-   Konfirmasi, dan hanya checkpoint terkonfirmasi yang dikirim ke F3.
-4. **Rule dapat ditelusuri.** Setiap temuan guardrail membawa rule ID, versi
-   rule, dan source ID. Status skrining memakai kosakata F2
-   (`clear_for_current_screening`, `warning`, `blocked`, `unknown`) dan bukan
-   vonis halal atau persetujuan BPOM.
-5. **Setiap angka menyebutkan asalnya.** Komponen `BandProvenance` menempel pada
-   kartu prediktif untuk memisahkan rule deterministik, pembacaan alat, prediksi
-   synthetic-demo, estimasi heuristik, dan keputusan manusia.
-
-Seluruh data dan model dalam prototipe ini berstatus `synthetic_demo` dan
-`not_validated_for_production`.

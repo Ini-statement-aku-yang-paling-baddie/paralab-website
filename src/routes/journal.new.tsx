@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleHelp, Copy, FileText, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CircleHelp, Copy, FileText, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/paralab/AppShell";
 import { Card, CardTitle, Field, GhostButton, Pill, PrimaryButton, inputClass } from "@/components/paralab/ui";
 import {
@@ -53,7 +53,7 @@ export const Route = createFileRoute("/journal/new")({
   component: JurnalBaruPage,
 });
 
-const LANGKAH = ["Brief penelitian", "Usulan formula AI", "Tinjau dan setujui"];
+const LANGKAH = ["Brief penelitian", "Simpan formula AI", "Tetapkan parameter", "Tinjau dan setujui"];
 
 function JurnalBaruPage() {
   const navigate = useNavigate();
@@ -77,6 +77,7 @@ function JurnalBaruPage() {
   const [paramBaru, setParamBaru] = useState(PARAM_LIBRARY[0]!.id);
   const [standar, setStandar] = useState<PilihanStandar>("nasional");
   const [stokDibuka, setStokDibuka] = useState<string | null>(null);
+  const [menganalisis, setMenganalisis] = useState(false);
 
   const klaimOpsi = useMemo(() => klaimUntukKategori(brief.kategori), [brief.kategori]);
   const kulitOpsi = useMemo(() => tipeKulitUntukKategori(brief.kategori), [brief.kategori]);
@@ -110,6 +111,7 @@ function JurnalBaruPage() {
   function generate() {
     setBahan(susunFormula(brief));
     setLangkah(1);
+    setMenganalisis(false);
   }
 
   function salinFormula(sumber: Project) {
@@ -119,6 +121,7 @@ function JurnalBaruPage() {
     setTargets(sumber.targets.map((t) => ({ ...t })));
     setBrief((b) => ({ ...b, kategori: sumber.kategori }));
     setLangkah(1);
+    setMenganalisis(false);
   }
 
   function ubahPersen(id: string, nilai: number) {
@@ -139,6 +142,14 @@ function JurnalBaruPage() {
     const def = PARAM_LIBRARY.find((x) => x.id === paramBaru);
     if (!def || targets.some((t) => t.id === def.id)) return;
     setTargets((prev) => [...prev, paramKeTarget(def)]);
+  }
+
+  function simpanParameter() {
+    setMenganalisis(true);
+    window.setTimeout(() => {
+      setMenganalisis(false);
+      setLangkah(3);
+    }, 1600);
   }
 
   function simpanJurnal(bukaEditor = false) {
@@ -450,7 +461,7 @@ function JurnalBaruPage() {
             </div>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          {langkah >= 3 && <div className="grid gap-5 lg:grid-cols-3">
             <Card>
               <CardTitle title="Pre-check kompatibilitas" sub="Pemeriksaan sisi klien sebelum F2 dijalankan server" />
               <BandProvenance lapis="rule" />
@@ -509,9 +520,9 @@ function JurnalBaruPage() {
                 </BarChart>
               </ResponsiveContainer>
             </Card>
-          </div>
+          </div>}
 
-          <Card>
+          {langkah >= 2 && <Card>
             <CardTitle
               title="Parameter produk yang diinginkan"
               sub="Setiap parameter terhubung ke sensor laboratorium dan menjadi kriteria kelulusan batch."
@@ -563,7 +574,7 @@ function JurnalBaruPage() {
                         value={t.target}
                         onChange={(e) => setTargets((prev) => prev.map((x, i) => (i === idx ? { ...x, target: Number(e.target.value) } : x)))}
                       />
-                      <span className="text-sm font-semibold text-muted-foreground">±</span>
+                      <span className="text-sm font-semibold text-muted-foreground">&plusmn;</span>
                       <input
                         type="number"
                         step="0.1"
@@ -589,16 +600,31 @@ function JurnalBaruPage() {
                 );
               })}
             </div>
-          </Card>
+            {langkah === 2 && (
+              <div className="mt-4 border-t border-border pt-4">
+                <PrimaryButton onClick={simpanParameter} disabled={targets.length === 0 || menganalisis}>
+                  {menganalisis ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                  {menganalisis ? "AI menganalisis formula dan parameter" : "Simpan parameter dan jalankan analisis"}
+                </PrimaryButton>
+                {menganalisis && (
+                  <div className="mt-3 h-1.5 overflow-hidden bg-secondary">
+                    <span className="block h-full w-2/3 animate-pulse bg-brand" />
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>}
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <GhostButton onClick={() => setLangkah(0)}>
               <ArrowLeft className="size-4" /> Kembali ke brief
             </GhostButton>
             {langkah === 1 ? (
-              <PrimaryButton onClick={() => setLangkah(2)}>
-                Setuju dan buat jurnal praktikum <ArrowRight className="size-4" />
+              <PrimaryButton onClick={() => setLangkah(2)} disabled={Math.abs(totalPersen - 100) >= 0.5}>
+                <Check className="size-4" /> Simpan formula
               </PrimaryButton>
+            ) : langkah === 2 ? (
+              <span className="text-xs text-muted-foreground">Simpan parameter untuk membuka prediktif pre-check kompatibilitas.</span>
             ) : (
               <PrimaryButton onClick={() => simpanJurnal()}>
                 <Check className="size-4" /> Simpan jurnal praktikum batch 1
@@ -606,7 +632,7 @@ function JurnalBaruPage() {
             )}
           </div>
 
-          {langkah === 2 && (
+          {langkah === 3 && (
             <div className="space-y-5">
               <Card>
                 <CardTitle title="Pratinjau jurnal praktikum kosong" sub="AI menyiapkan kerangka, peneliti tetap wajib menguji ulang formula di laboratorium." />

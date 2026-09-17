@@ -21,6 +21,7 @@ import {
   Radio,
   Send,
   Sparkles,
+  Loader2,
   X,
 } from "lucide-react";
 import { AppShell } from "@/components/paralab/AppShell";
@@ -41,8 +42,6 @@ import { actions, useAppState, useProject } from "@/lib/paralab/store";
 import { bacaSatuSensor } from "@/hooks/use-sensors";
 import { PanelPemantauan } from "@/components/paralab/PanelPemantauan";
 import { UjiSampelStabilitas } from "@/components/paralab/UjiSampelStabilitas";
-import { PanelCheckpoint } from "@/components/paralab/PanelCheckpoint";
-import { PanelSentinel } from "@/components/paralab/PanelSentinel";
 import { BandProvenance, JejakRule } from "@/components/paralab/BandProvenance";
 import { unduhScaleUpBrief } from "@/lib/paralab/scaleup";
 
@@ -81,6 +80,7 @@ function JurnalDetail() {
   const [aktif, setAktif] = useState(search.batch ?? 1);
   // Usulan sensor yang belum dikonfirmasi peneliti. Nilai di sini belum masuk jurnal.
   const [usulanSensor, setUsulanSensor] = useState<Record<string, number>>({});
+  const [menganalisisAkhir, setMenganalisisAkhir] = useState(false);
 
   if (!proyek) {
     return (
@@ -170,19 +170,20 @@ function JurnalDetail() {
     }));
   }
 
-  function selesaikanBatch() {
-    const evaluasi = evaluasiBatch(batch, proyek!.targets, batch.feedback);
-    actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({ ...b, status: "dievaluasi", evaluasi }));
-    actions.catat(
-      nama,
-      proyek!.judul,
-      "Batch selesai",
-      "RnD batch " +
-        batch.nomor +
-        " ditutup dengan skor kesesuaian " +
-        evaluasi.skorKesesuaian +
-        " persen",
-    );
+  function analisisAkhir() {
+    setMenganalisisAkhir(true);
+    window.setTimeout(() => {
+      const evaluasi = evaluasiBatch(batch, proyek!.targets, batch.feedback);
+      const risiko = batch.prediksiStabilitas;
+      if (risiko && risiko.risikoPecah >= 50) {
+        evaluasi.kekurangan.push("Simulasi stabilitas menunjukkan risiko pecah emulsi " + risiko.risikoPecah + "% berdasarkan citra spesimen dan komposisi formula.");
+        evaluasi.rekomendasi.push(...risiko.mitigasi);
+        evaluasi.skorKesesuaian = Math.min(evaluasi.skorKesesuaian, 69);
+      }
+      actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({ ...b, status: "dievaluasi", evaluasi }));
+      actions.catat(nama, proyek!.judul, "Analisis akhir", "Dashboard, jurnal, feedback, spesimen, dan checkpoint batch " + batch.nomor + " dianalisis");
+      setMenganalisisAkhir(false);
+    }, 2200);
   }
 
   function buatBatchBerikut() {
@@ -513,47 +514,16 @@ function JurnalDetail() {
         </Card>
       </div>
 
-      <PanelCheckpoint proyek={proyek} batch={batch} peneliti={nama} />
-
-      <PanelSentinel proyek={proyek} batch={batch} peneliti={nama} />
-
       <UjiSampelStabilitas proyek={proyek} batch={batch} peneliti={nama} />
 
-      <Card className="mt-5">
-        <CardTitle
-          title={"Penutupan RnD batch " + batch.nomor}
-          sub="Tambahkan masukan peneliti agar analisis AI lebih tajam."
-          right={
-            <Pill variant={batch.status === "dievaluasi" ? "aman" : "brand"}>{batch.status}</Pill>
-          }
-        />
-        <textarea
-          className={inputClass + " min-h-20"}
-          placeholder="Masukan peneliti, misalnya tekstur terlalu berat atau aroma kurang stabil setelah dua minggu."
-          value={batch.feedback}
-          onChange={(e) =>
-            actions.simpanBatch(proyek.id, batch.nomor, (b) => ({ ...b, feedback: e.target.value }))
-          }
-        />
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <PrimaryButton
-            onClick={selesaikanBatch}
-            disabled={!lengkap || batch.status === "dievaluasi"}
-          >
-            <FlaskConical className="size-4" /> RnD batch {batch.nomor} selesai
-          </PrimaryButton>
-          {!lengkap && (
-            <span className="text-xs text-muted-foreground">
-              Lengkapi seluruh parameter hasil uji sebelum menutup batch.
-            </span>
-          )}
-        </div>
-      </Card>
+      {batch.spesimenAkhir && <Card className="mt-5"><CardTitle title="Catatan peneliti dan spesimen akhir" sub="Disimpan dari laporan praktikum proyek ini." /><div className="grid gap-4 sm:grid-cols-[12rem_1fr]"><img src={batch.spesimenAkhir.gambar} alt="Spesimen akhir" className="h-40 w-full border border-border object-cover" /><div><p className="text-sm leading-relaxed text-foreground">{batch.feedback || "Belum ada feedback peneliti."}</p><p className="mt-2 text-xs text-muted-foreground">{batch.spesimenAkhir.namaFile}</p></div></div></Card>}
+
+      {batch.timeframeSiap && !batch.evaluasi && <Card className="mt-5"><CardTitle title="Keputusan standar dan analisis lintas bukti" sub="Analisis membaca hasil dashboard, laporan praktikum, feedback, citra spesimen, prediksi stabilitas, dan checkpoint terkonfirmasi." /><p className="mb-4 text-sm font-semibold text-warning">Penelitian Anda belum sesuai standar. Selesaikan uji timeframe dan jalankan analisis untuk menentukan rancangan batch berikutnya.</p><PrimaryButton onClick={analisisAkhir} disabled={!lengkap || !batch.prediksiStabilitas || menganalisisAkhir}>{menganalisisAkhir ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{menganalisisAkhir ? "AI menganalisis seluruh bukti penelitian" : "Analisis hasil dan siapkan rekomendasi"}</PrimaryButton>{menganalisisAkhir && <div className="mt-4 h-1.5 overflow-hidden bg-secondary"><span className="block h-full w-3/4 animate-pulse bg-brand" /></div>}<p className="mt-3 text-xs text-muted-foreground">Lengkapi hasil parameter dan jalankan prediktif stabilitas terlebih dahulu.</p></Card>}
 
       {batch.evaluasi && (
         <Card className="mt-5">
           <CardTitle
-            title="Evaluasi AI dan rancangan batch berikutnya"
+            title="Hasil analisis, mitigasi, dan rancangan batch berikutnya"
             sub={
               "Skor kesesuaian " + batch.evaluasi.skorKesesuaian + " persen terhadap standar output"
             }
@@ -564,6 +534,7 @@ function JurnalDetail() {
             }
           />
           <p className="text-sm text-foreground">{batch.evaluasi.ringkasan}</p>
+          {batch.evaluasi.skorKesesuaian < 70 && <p className="mt-3 border-l-2 border-warning bg-warning-soft/40 p-3 text-sm font-semibold text-foreground">Penelitian Anda belum sesuai standar. Silakan lanjutkan penelitian ke batch {batch.nomor + 1} berdasarkan mitigasi di bawah.</p>}
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">

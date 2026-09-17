@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Camera, CheckCircle2, ImagePlus, Microscope, PlayCircle, Trash2 } from "lucide-react";
+import { BrainCircuit, Camera, CheckCircle2, ImagePlus, Loader2, Microscope, PlayCircle, Trash2, UserCheck } from "lucide-react";
 import type { Batch, CitraStabilitasEntry, Project } from "@/lib/paralab/data";
 import { actions } from "@/lib/paralab/store";
 import { jadwalFotoDroplet } from "@/lib/paralab/pemantauan";
@@ -29,6 +29,7 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
   const [hari, setHari] = useState(0);
   const [dimulaiManual, setDimulaiManual] = useState(false);
   const [memproses, setMemproses] = useState(false);
+  const [menganalisis, setMenganalisis] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const jadwal = jadwalFotoDroplet(batch, Date.now());
   const entri = [...(batch.citraStabilitas ?? [])].sort((a, b) => a.hari - b.hari);
@@ -36,6 +37,7 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
   const aktif = dimulaiManual || Boolean(batch.ujiSampelDimulai) || batch.status === "pemantauan";
   const berikutnya = jadwal.find((t) => !hariTerekam.has(t.hari));
   const terakhir = entri[entri.length - 1];
+  const prediksi = batch.prediksiStabilitas;
 
   function mulai() {
     setDimulaiManual(true);
@@ -116,17 +118,65 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
     img.src = url;
   }
 
+  function jalankanPrediksi() {
+    if (!terakhir) return;
+    setMenganalisis(true);
+    window.setTimeout(() => {
+      const bahanAktif = batch.bahan.filter((b) => ["Vitamin", "Retinoid", "Asam Eksfolian", "Peptida", "Antioksidan"].includes(b.golongan));
+      const risikoPecah = Math.min(96, Math.max(4, Math.round(terakhir.skorPemisahan * 0.72 + terakhir.indeksPolidispersi * 16)));
+      const risikoWarna = Math.min(94, Math.max(5, Math.round(100 - terakhir.homogenitas + bahanAktif.length * 4)));
+      const risikoInteraksi = Math.min(92, 8 + bahanAktif.length * 9);
+      const shelfLife = Math.max(3, Math.min(36, Math.round(30 - (risikoPecah + risikoWarna + risikoInteraksi) / 10)));
+      const minggu = Math.max(0, Math.round(hari / 7));
+      const checkpoint = {
+        minggu,
+        ph: Number((5.4 - risikoWarna / 500).toFixed(2)),
+        viskositasCp: Math.max(800, Math.round(6400 * (1 - risikoPecah / 180))),
+        penampilan: risikoPecah >= 55 ? "phase_separation" : risikoWarna >= 45 ? "color_shift" : "uniform",
+        sumber: "sensor" as const,
+        dikonfirmasi: false,
+        waktu: new Date().toISOString(),
+      };
+      actions.simpanBatch(proyek.id, batch.nomor, (b) => ({
+        ...b,
+        prediksiStabilitas: {
+          dibuat: new Date().toISOString(),
+          shelfLifeBulan: shelfLife,
+          risikoPecah,
+          risikoPerubahanWarna: risikoWarna,
+          risikoInteraksiAktif: risikoInteraksi,
+          ringkasan: risikoPecah >= 55 ? "Emulsi menunjukkan risiko pemisahan fase dan memerlukan optimasi sistem emulsifier." : "Struktur emulsi diproyeksikan bertahan, dengan pemantauan warna dan viskositas tetap diperlukan.",
+          mitigasi: [
+            "Konfirmasi pH dan viskositas pada setiap titik waktu sebelum keputusan batch.",
+            risikoPecah >= 40 ? "Evaluasi rasio emulsifier, energi homogenisasi, dan urutan pendinginan." : "Pertahankan rasio emulsifier dan profil pendinginan batch ini.",
+            risikoWarna >= 35 ? "Kurangi paparan cahaya dan oksigen, lalu evaluasi antioksidan serta kelator." : "Pantau ΔE dan kondisi kemasan selama studi dipercepat.",
+          ],
+        },
+        checkpoints: [...(b.checkpoints ?? []).filter((c) => c.minggu !== minggu), checkpoint],
+      }));
+      actions.catat(peneliti, proyek.judul, "Prediksi stabilitas", "Prediksi timeframe batch " + batch.nomor + " dibuat dan checkpoint minggu ke-" + minggu + " diusulkan");
+      setMenganalisis(false);
+    }, 1800);
+  }
+
+  function konfirmasiCheckpoint(minggu: number) {
+    actions.simpanBatch(proyek.id, batch.nomor, (b) => ({
+      ...b,
+      checkpoints: (b.checkpoints ?? []).map((c) => c.minggu === minggu ? { ...c, dikonfirmasi: true, dikonfirmasiOleh: peneliti } : c),
+    }));
+  }
+
   return (
     <Card className="mt-5">
       <CardTitle
-        title="Proses uji coba sampel stabilitas"
-        sub="Analisis citra droplet mengusulkan observasi dari foto sampel tiap tiga hari."
+        title="Uji timeframe dan prediktif stabilitas"
+        sub="Satu alur untuk gambar sampel, simulasi shelf life, interaksi bahan aktif, risiko emulsi, perubahan warna, dan checkpoint."
         right={<Pill variant={aktif ? "brand" : "netral"}>{aktif ? "berjalan" : "belum dimulai"}</Pill>}
       />
 
       <BandProvenance
         lapis="heuristik"
-        tambahan="Pilot CV belum tervalidasi untuk foto lab nyata dan tidak menulis checkpoint sendiri."
+        tambahan="Analisis citra dan simulasi hanya mengusulkan checkpoint. Peneliti tetap wajib mengonfirmasi hasil pengamatan."
       />
 
       {!aktif ? (
@@ -256,9 +306,45 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
               </div>
             </div>
           )}
+
+          <div className="border-t border-border pt-4">
+            <PrimaryButton onClick={jalankanPrediksi} disabled={!terakhir || menganalisis}>
+              {menganalisis ? <Loader2 className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
+              {menganalisis ? "AI menganalisis citra, formula, dan timeframe" : "Mulai jalankan uji prediktif stabilitas"}
+            </PrimaryButton>
+            {menganalisis && <div className="mt-3 h-1.5 overflow-hidden bg-secondary"><span className="block h-full w-2/3 animate-pulse bg-brand" /></div>}
+          </div>
+
+          {prediksi && (
+            <div className="space-y-4 border-t border-border pt-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <MiniPrediksi label="Shelf life proyeksi" nilai={prediksi.shelfLifeBulan + " bulan"} />
+                <MiniPrediksi label="Risiko pecah emulsi" nilai={prediksi.risikoPecah + "%"} />
+                <MiniPrediksi label="Risiko perubahan warna" nilai={prediksi.risikoPerubahanWarna + "%"} />
+                <MiniPrediksi label="Interaksi bahan aktif" nilai={prediksi.risikoInteraksiAktif + "%"} />
+              </div>
+              <p className="text-sm text-foreground">{prediksi.ringkasan}</p>
+              <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">{prediksi.mitigasi.map((m) => <li key={m}>{m}</li>)}</ul>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Checkpoint stabilitas yang diusulkan</p>
+                <div className="mt-2 overflow-x-auto">
+                  <table className="table-clear w-full text-sm">
+                    <thead><tr><th>Minggu</th><th>pH</th><th>Viskositas</th><th>Penampilan</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <tbody>{(batch.checkpoints ?? []).map((c) => (
+                      <tr key={c.minggu}><td>{c.minggu}</td><td>{c.ph}</td><td>{c.viskositasCp} cP</td><td>{c.penampilan.replaceAll("_", " ")}</td><td>{c.dikonfirmasi ? "Dikonfirmasi" : "Usulan AI"}</td><td>{!c.dikonfirmasi && <GhostButton onClick={() => konfirmasiCheckpoint(c.minggu)}><UserCheck className="size-4" /> Konfirmasi</GhostButton>}</td></tr>
+                    ))}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       <DaftarBatas judul="Batas analisis citra" batas={BATAS_CV} />
     </Card>
   );
+}
+
+function MiniPrediksi({ label, nilai }: { label: string; nilai: string }) {
+  return <div className="border border-border bg-secondary/50 p-3 text-center"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 font-display text-lg font-semibold text-foreground">{nilai}</p></div>;
 }

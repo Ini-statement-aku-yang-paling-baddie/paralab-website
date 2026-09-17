@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlignCenter,
@@ -7,6 +7,7 @@ import {
   Bold,
   Cloud,
   Highlighter,
+  Image as ImageIcon,
   Italic,
   List,
   ListOrdered,
@@ -17,17 +18,16 @@ import {
   Table,
   Underline,
   Undo2,
-  PlayCircle,
 } from "lucide-react";
 import { Logo } from "@/components/paralab/AppShell";
 import { DocCopilot } from "@/components/paralab/DocCopilot";
 import { VoiceLog } from "@/components/paralab/VoiceLog";
-import { UjiCitraBatch } from "@/components/paralab/UjiCitraBatch";
+import { SpesimenAkhir } from "@/components/paralab/SpesimenAkhir";
 import { buatDokumenHtml, hitungKata } from "@/lib/paralab/dokumen";
 import { actions, hydrate, useAppState, useProject } from "@/lib/paralab/store";
 import { bacaSatuSensor } from "@/hooks/use-sensors";
-import { evaluasiBatch } from "@/lib/paralab/ai";
-import { Bot, CheckCircle2, ClipboardList, Lightbulb } from "lucide-react";
+import type { GambarSpesimen } from "@/lib/paralab/data";
+import { Bot, CheckCircle2, ClipboardList } from "lucide-react";
 
 type Search = { batch?: number | undefined };
 
@@ -47,6 +47,7 @@ export const Route = createFileRoute("/doc/$id")({
 });
 
 function DokumenEditor() {
+  const navigate = useNavigate();
   const { id } = Route.useParams();
   const search = Route.useSearch();
   const proyek = useProject(id);
@@ -55,12 +56,14 @@ function DokumenEditor() {
   const batch = proyek?.batches.find((b) => b.nomor === nomor) ?? proyek?.batches[0];
 
   const ref = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLInputElement>(null);
   const siap = useRef(false);
   const [status, setStatus] = useState("Semua perubahan tersimpan");
   const [kata, setKata] = useState(0);
   const [termuat, setTermuat] = useState(false);
   const [copilot, setCopilot] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [spesimen, setSpesimen] = useState<GambarSpesimen | undefined>();
 
   useEffect(() => {
     hydrate();
@@ -73,6 +76,7 @@ function DokumenEditor() {
     ref.current.innerHTML = html;
     setKata(hitungKata(html));
     setFeedback(batch.feedback ?? "");
+    setSpesimen(batch.spesimenAkhir);
     siap.current = true;
   }, [proyek, batch]);
 
@@ -139,55 +143,48 @@ function DokumenEditor() {
     actions.catat(user?.nama ?? proyek!.peneliti, proyek!.judul, "Pembacaan sensor", "Nilai sensor disisipkan ke dokumen jurnal batch " + batch!.nomor);
   }
 
-  function selesaikanBatch() {
-    simpan();
-    const ev = evaluasiBatch({ ...batch!, feedback }, proyek!.targets, feedback);
-    actions.simpanBatch(proyek!.id, batch!.nomor, (b) => ({ ...b, feedback, status: "dievaluasi", evaluasi: ev }));
-    actions.catat(user?.nama ?? proyek!.peneliti, proyek!.judul, "Batch selesai", "Praktikum batch " + batch!.nomor + " ditutup dengan skor kesesuaian " + ev.skorKesesuaian);
+  function sisipGambar(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      sisip('<figure><img src="' + reader.result + '" alt="Gambar sampel penelitian" /><figcaption>Gambar sampel penelitian</figcaption></figure><p></p>');
+    };
+    reader.readAsDataURL(file);
   }
 
-  function buatBatchBerikut() {
-    const ev = batch!.evaluasi;
-    if (!ev) return;
-    const nomorBaru = proyek!.batches.length + 1;
-    const bahanBaru = batch!.bahan.map((b) => {
-      const ubah = ev.perubahanFormula.find((p) => p.bahan === b.name);
-      return ubah ? { ...b, percent: ubah.ke } : { ...b };
-    });
-    actions.tambahBatch(proyek!.id, {
-      nomor: nomorBaru,
-      status: "draft",
-      dibuat: new Date().toISOString(),
-      tujuan: ev.rancanganBerikutnya.tujuan,
-      hipotesis: ev.rancanganBerikutnya.hipotesis,
-      prosedur: batch!.prosedur,
-      bahan: bahanBaru,
-      hasil: proyek!.targets.map((t) => ({ paramId: t.id, nilai: null, sumber: "sensor" as const })),
-      observasi: "",
-      feedback: "",
-    });
-    actions.catat(user?.nama ?? proyek!.peneliti, proyek!.judul, "Batch baru", "Rancangan batch " + nomorBaru + " dibuat dari evaluasi batch " + batch!.nomor);
-    window.location.assign("/doc/" + proyek!.id + "?batch=" + nomorBaru);
-  }
-
-  function mulaiUjiSampel() {
+  function mulaiTimeframe() {
+    if (!proyek || !batch) return;
+    const proyekAktif = proyek;
+    const batchAktif = batch;
     simpan();
-    actions.simpanBatch(proyek!.id, batch!.nomor, (b) => ({
+    actions.simpanBatch(proyekAktif.id, batchAktif.nomor, (b) => ({
       ...b,
+      feedback,
+      spesimenAkhir: spesimen,
       status: "pemantauan",
       ujiSampelDimulai: b.ujiSampelDimulai ?? new Date().toISOString(),
+      timeframeSiap: true,
     }));
-    actions.catat(user?.nama ?? proyek!.peneliti, proyek!.judul, "Uji coba sampel", "Pemantauan stabilitas droplet batch " + batch!.nomor + " dimulai dari editor jurnal");
-    window.location.assign("/journal/" + proyek!.id + "?batch=" + batch!.nomor);
+    actions.catat(user?.nama ?? proyekAktif.peneliti, proyekAktif.judul, "Uji timeframe sampel", "Feedback dan gambar spesimen akhir batch " + batchAktif.nomor + " disimpan");
+    navigate({ to: "/journal/$id", params: { id: proyekAktif.id }, search: { batch: batchAktif.nomor } });
   }
-
-  const ev = batch.evaluasi;
 
   const tombol =
     "flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground";
 
   return (
     <div className="min-h-screen bg-secondary">
+      <input
+        ref={imageRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) sisipGambar(file);
+          event.target.value = "";
+        }}
+      />
       <header className="sticky top-0 z-20 border-b border-border bg-card">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3">
           <Link to="/journal/$id" params={{ id: proyek.id }} search={{ batch: batch.nomor }}>
@@ -269,6 +266,12 @@ function DokumenEditor() {
           </button>
           <span className="mx-1 h-5 w-px bg-border" />
           <button
+            onClick={() => imageRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <ImageIcon className="size-4" /> Tambah gambar
+          </button>
+          <button
             onClick={sisipTabelHasil}
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
           >
@@ -298,16 +301,13 @@ function DokumenEditor() {
         <section className="w-full max-w-[816px] rounded-2xl border border-border bg-card p-6 print:hidden">
           <div className="flex items-center gap-2">
             <ClipboardList className="size-5 text-brand" />
-            <h2 className="text-base font-bold text-foreground">Penutupan praktikum batch ke-{batch.nomor}</h2>
+            <h2 className="text-base font-bold text-foreground">Dokumentasi akhir batch ke-{batch.nomor}</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tuliskan hasil pengamatan dan kendala pada batch ini. Analisis akan membaca laporan praktikum beserta catatan Anda, lalu menyusun rekomendasi untuk batch berikutnya.
+            Simpan kondisi spesimen dan feedback peneliti sebelum menjalankan uji timeframe sampel.
           </p>
 
-          <UjiCitraBatch
-            nomor={batch.nomor}
-            onTemuan={(t) => setFeedback((v) => (v.trim() ? v.trim() + " " + t : t))}
-          />
+          <SpesimenAkhir value={spesimen} onChange={setSpesimen} />
 
           <label className="mt-4 block text-sm font-semibold text-foreground" htmlFor="feedback-batch">
             Umpan balik peneliti
@@ -322,89 +322,12 @@ function DokumenEditor() {
           />
 
           <button
-            onClick={selesaikanBatch}
+            onClick={mulaiTimeframe}
+            disabled={!feedback.trim() || !spesimen}
             className="mt-3 flex items-center gap-2 rounded-xl brand-gradient px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm"
           >
-            <CheckCircle2 className="size-4" /> Selesaikan praktikum batch ke-{batch.nomor}
+            <CheckCircle2 className="size-4" /> Uji timeframe sampel
           </button>
-
-          {ev && (
-            <div className="mt-6 space-y-4 border-t border-border pt-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">Skor kesesuaian {ev.skorKesesuaian}</span>
-                <p className="text-sm text-foreground">{ev.ringkasan}</p>
-              </div>
-
-              <div>
-                <p className="text-sm font-bold text-foreground">Kekurangan yang terdeteksi</p>
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                  {ev.kekurangan.length === 0 ? <li>Tidak ada temuan kritis pada batch ini.</li> : ev.kekurangan.map((k, i) => <li key={i}>{k}</li>)}
-                </ul>
-              </div>
-
-              <div>
-                <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
-                  <Lightbulb className="size-4 text-warning" /> Rekomendasi batch berikutnya
-                </p>
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                  {ev.rekomendasi.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {ev.perubahanFormula.length > 0 && (
-                <div>
-                  <p className="text-sm font-bold text-foreground">Usulan penyesuaian formula</p>
-                  <table className="table-clear mt-1 w-full text-left text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase text-muted-foreground">
-                        <th className="py-1">Bahan</th>
-                        <th className="py-1">Dari</th>
-                        <th className="py-1">Menjadi</th>
-                        <th className="py-1">Alasan</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ev.perubahanFormula.map((p, i) => (
-                        <tr key={i} className="border-t border-border">
-                          <td className="py-1.5 font-medium text-foreground">{p.bahan}</td>
-                          <td className="py-1.5 text-muted-foreground">{p.dari} persen</td>
-                          <td className="py-1.5 font-semibold text-brand">{p.ke} persen</td>
-                          <td className="py-1.5 text-muted-foreground">{p.alasan}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              <div>
-                <p className="text-sm font-bold text-foreground">Rancangan batch {proyek.batches.length + 1}</p>
-                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                  {ev.rancanganBerikutnya.tujuan.map((t, i) => (
-                    <li key={i}>{t}</li>
-                  ))}
-                </ul>
-                <p className="mt-1.5 text-sm text-muted-foreground">Hipotesis: {ev.rancanganBerikutnya.hipotesis}</p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={mulaiUjiSampel}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand-soft"
-                >
-                  <PlayCircle className="size-4" /> Mulai proses uji coba sampel
-                </button>
-                <button
-                  onClick={buatBatchBerikut}
-                  className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-brand hover:bg-brand-soft"
-                >
-                  Buat jurnal praktikum batch {proyek.batches.length + 1}
-                </button>
-              </div>
-            </div>
-          )}
         </section>
       </main>
 
