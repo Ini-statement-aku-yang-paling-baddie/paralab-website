@@ -194,7 +194,15 @@ Perbaikan: jadikan `VITE_PARALAB_F3_URL` opsional yang jatuh ke `MODEL_API_BASE`
 
 `toF4RequestFromF3()` menerima argumen kedua `checkpoint`, tetapi pemanggilnya tidak pernah mengisinya. Akibatnya F4 tidak dapat menunjuk `ph`, `viscosity_cp`, atau `appearance` yang belum terisi, padahal kemampuan itu sudah ada di sisi server.
 
-Perbaikan: kirim checkpoint terkonfirmasi terakhir dari batch yang sedang dibuka.
+Perbaikan: kirim checkpoint terkonfirmasi terakhir dari batch yang sedang dibuka. Perhatikan bahwa kedua sisi memakai nama field yang berbeda dan perlu dipetakan:
+
+| Dibaca server | Field di website |
+|---|---|
+| `checkpoint.measurements.ph` | `Checkpoint.ph` |
+| `checkpoint.measurements.viscosity_cp` | `Checkpoint.viskositasCp` |
+| `checkpoint.appearance` | `Checkpoint.penampilan` |
+
+Hanya checkpoint dengan `dikonfirmasi` bernilai true yang boleh dikirim.
 
 ### 7.3 F2 dipanggil dengan `context` kosong
 
@@ -246,6 +254,18 @@ src/routes/journal.$id.tsx               (ubah, pemilik tunggal)
 
 Termasuk perbaikan 7.2 dan 7.3. Port juga berkas test yang sudah ada pada branch lama untuk keempat berkas pertama.
 
+Rujukan implementasi lama:
+
+```bash
+git show origin/feat/model-integration:src/lib/paralab/model-adapters.ts
+git show origin/feat/model-integration:src/lib/paralab/f4-adapter.ts
+git show origin/feat/model-integration:src/components/paralab/FormulaScreeningCard.tsx
+git show origin/feat/model-integration:src/components/paralab/NextValidationCard.tsx
+git show origin/feat/model-integration:src/routes/journal.\$id.tsx
+```
+
+Pada branch lama, pemanggilan F2 ada di `journal.$id.tsx` baris 198 pada fungsi `periksaFormulaDanRisiko`, F4 di baris 216 pada fungsi `muatLangkahValidasi`, dan `NextValidationCard` dirender di baris 607.
+
 ### WS-2, branch `feat/f1-copilot`
 
 Cakupan: F1 Evidence Copilot.
@@ -257,6 +277,15 @@ src/routes/doc.$id.tsx                   (ubah, HANYA blok copilot)
 
 Versi `master` dan versi branch lama dari `DocCopilot.tsx` sama-sama berubah, jadi ini penggabungan, bukan penyalinan. Pertahankan fungsi `jawab()` sebagai fallback lokal beserta penandanya.
 
+Rujukan implementasi lama:
+
+```bash
+git show origin/feat/model-integration:src/components/paralab/DocCopilot.tsx
+git show origin/feat/model-integration:src/components/paralab/DocCopilot.test.tsx
+```
+
+Pada branch lama, pemanggilan F1 ada di `DocCopilot.tsx` baris 198, dan komponennya dirender dari `doc.$id.tsx` baris 431.
+
 ### WS-3, branch `feat/f5-voicelog`
 
 Cakupan: F5 Voice Log dan perbaikan 7.1.
@@ -267,6 +296,16 @@ src/components/paralab/VoiceLog.tsx      (ubah, port + gabung dengan versi maste
 src/lib/paralab/f3.ts                    (ubah kecil, perbaikan 7.1 saja)
 src/routes/doc.$id.tsx                   (ubah, HANYA blok voice log)
 ```
+
+Rujukan implementasi lama:
+
+```bash
+git show origin/feat/model-integration:src/lib/paralab/f5-adapter.ts
+git show origin/feat/model-integration:src/components/paralab/VoiceLog.tsx
+git show origin/feat/model-integration:src/lib/paralab/f3.ts
+```
+
+Pada branch lama, pemanggilan F5 ada di `VoiceLog.tsx` baris 104, dan komponennya dirender dari `doc.$id.tsx` baris 411. Versi `f3.ts` pada branch lama juga menambahkan header `ngrok-skip-browser-warning` untuk keadaan gateway berada di balik tunnel ngrok gratis. Sisi server sudah mengizinkan header itu, jadi ikut diport.
 
 ### Aturan anti-konflik
 
