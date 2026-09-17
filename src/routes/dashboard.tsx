@@ -90,7 +90,7 @@ function DashboardPage() {
     >
       <p className="mb-4 text-xs text-muted-foreground">
         Simulasi profesional untuk alur kerja laboratorium, bukan formula komersial atau data
-        internal ParagonCorp.
+        internal Vinara.
       </p>
 
       <StatStrip>

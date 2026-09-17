@@ -428,11 +428,7 @@ function DokumenEditor() {
       />
 
       {copilot && (
-        <DocCopilot
-          judul={proyek.judul}
-          batchNomor={batch.nomor}
-          onTutup={() => setCopilot(false)}
-        />
+        <DocCopilot proyek={proyek} batch={batch} onTutup={() => setCopilot(false)} />
       )}
     </div>
   );

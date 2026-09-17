@@ -165,8 +165,11 @@ function HandoffPage() {
                 Kepatuhan
               </p>
               <p className="mt-1.5 flex items-center gap-2">
-                <ShieldCheck className="size-4 text-success" /> Status {kepatuhan.status}. Seluruh
-                bahan tercatat lengkap dengan sertifikat dan batas regulasi.
+                <ShieldCheck className="size-4 text-muted-foreground" /> Skrining rule prototipe
+                versi {kepatuhan.ruleVersion}: {kepatuhan.label}.
+                {kepatuhan.perluTandaTanganManusia
+                  ? " Tanda tangan penanggung jawab wajib sebelum berkas ini dipakai divisi penerima."
+                  : " Bukan persetujuan regulasi, halal, atau keamanan."}
               </p>
             </section>
             {batchTerakhir.evaluasi && (

@@ -37,7 +37,7 @@ function LoginPage() {
             Setiap parameter penelitian terhubung langsung ke sensor laboratorium, sehingga hasil uji tercatat objektif dari batch pertama sampai serah terima ke divisi terkait.
           </p>
         </div>
-        <p className="text-xs opacity-75">Prototipe riset internal untuk tim R&amp;D Paragon</p>
+        <p className="text-xs opacity-75">Prototipe riset internal untuk tim R&amp;D Vinara</p>
       </div>
 
       <div className="flex items-center justify-center px-6 py-14">

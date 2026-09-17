@@ -36,56 +36,38 @@ const SCREENING: F2Screening = {
 
 describe("FormulaScreeningCard", () => {
   it("menampilkan status keseluruhan dari backend", () => {
-    render(
-      <FormulaScreeningCard screening={SCREENING} loading={false} error={null} missingF3={[]} />,
-    );
+    render(<FormulaScreeningCard screening={SCREENING} loading={false} error={null} />);
     expect(screen.getByText("warning")).toBeTruthy();
   });
 
   it("menampilkan rule_id dan alasan yang bisa diaudit", () => {
-    render(
-      <FormulaScreeningCard screening={SCREENING} loading={false} error={null} missingF3={[]} />,
-    );
+    render(<FormulaScreeningCard screening={SCREENING} loading={false} error={null} />);
     expect(screen.getByText(/COMPAT-001/)).toBeTruthy();
     expect(screen.getByText(/asam askorbat berpotensi tidak stabil/)).toBeTruthy();
   });
 
   it("menandai bahwa sign-off manusia wajib", () => {
-    render(
-      <FormulaScreeningCard screening={SCREENING} loading={false} error={null} missingF3={[]} />,
-    );
+    render(<FormulaScreeningCard screening={SCREENING} loading={false} error={null} />);
     expect(screen.getByText(/butuh sign-off manusia/i)).toBeTruthy();
   });
 
-  it("melaporkan input F3 yang masih kurang tanpa mengarang nilai", () => {
-    render(
-      <FormulaScreeningCard
-        screening={SCREENING}
-        loading={false}
-        error={null}
-        missingF3={["process.homogenization_rpm", "landmarkWeek"]}
-      />,
-    );
-    expect(screen.getByText(/process\.homogenization_rpm/)).toBeTruthy();
-    expect(screen.getByText(/landmarkWeek/)).toBeTruthy();
+  it("menampilkan derived feature F2", () => {
+    render(<FormulaScreeningCard screening={SCREENING} loading={false} error={null} />);
+    expect(screen.getByText(/electrolyte_thickener_risk: high/)).toBeTruthy();
   });
 
   it("menampilkan state loading", () => {
-    render(<FormulaScreeningCard screening={null} loading error={null} missingF3={[]} />);
+    render(<FormulaScreeningCard screening={null} loading error={null} />);
     expect(screen.getByText(/menjalankan screening formula/i)).toBeTruthy();
   });
 
   it("menampilkan state error", () => {
-    render(
-      <FormulaScreeningCard screening={null} loading={false} error="404" missingF3={[]} />,
-    );
+    render(<FormulaScreeningCard screening={null} loading={false} error="404" />);
     expect(screen.getByText(/screening formula belum tersedia/i)).toBeTruthy();
   });
 
   it("tidak menawarkan aksi ubah formula atau konsentrasi", () => {
-    render(
-      <FormulaScreeningCard screening={SCREENING} loading={false} error={null} missingF3={[]} />,
-    );
+    render(<FormulaScreeningCard screening={SCREENING} loading={false} error={null} />);
     const labels = screen
       .queryAllByRole("button")
       .map((b) => b.textContent ?? "")

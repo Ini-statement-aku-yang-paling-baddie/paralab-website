@@ -1,3 +1,5 @@
+import { RULE_VERSION } from "./kontrak";
+
 export type HalalStatus = "halal" | "syubhat" | "haram";
 
 export type Ingredient = {
@@ -61,6 +63,31 @@ export type CitraStabilitasEntry = {
 
 export type BatchStatus = "draft" | "berjalan" | "pemantauan" | "selesai" | "dievaluasi";
 
+/**
+ * Checkpoint longitudinal sesuai kontrak F3 (architecture v5 §5.2).
+ *
+ * `dikonfirmasi` adalah gerbang wajib: sensor dan analisis citra hanya boleh
+ * mengusulkan nilai, peneliti yang menyatakan sebuah checkpoint sah. Hanya
+ * checkpoint terkonfirmasi yang dikirim ke F3.
+ */
+export type Checkpoint = {
+  minggu: number;
+  ph: number;
+  viskositasCp: number;
+  penampilan: string;
+  sumber: "sensor" | "manual";
+  dikonfirmasi: boolean;
+  dikonfirmasiOleh?: string | undefined;
+  waktu: string;
+};
+
+/** Parameter proses yang dibaca F3 sebagai feature, bukan hasil pengukuran sampel. */
+export type ProsesBatch = {
+  heating_temp_c: number;
+  homogenization_rpm: number;
+  mixing_time_min: number;
+};
+
 export type Batch = {
   nomor: number;
   status: BatchStatus;
@@ -72,6 +99,9 @@ export type Batch = {
   hasil: TestResult[];
   observasi: string;
   feedback: string;
+  checkpoints?: Checkpoint[] | undefined;
+  proses?: ProsesBatch | undefined;
+  suhuSimpanC?: number | undefined;
   evaluasi?: BatchEvaluation | undefined;
   dokumen?: string | undefined;
   dokumenDiubah?: string | undefined;
@@ -1075,30 +1105,50 @@ export const BAHAN_LIBRARY: Ingredient[] = [
 ];
 
 
-export const CLASH_RULES: { a: string; b: string; tingkat: "tinggi" | "sedang"; alasan: string }[] = [
-  { a: "vitc", b: "niacinamide", tingkat: "sedang", alasan: "Pada pH rendah dapat membentuk niacin yang memicu kemerahan, pisahkan fase atau jaga pH di atas 5" },
-  { a: "retinol", b: "aha", tingkat: "tinggi", alasan: "Kombinasi eksfolian kuat meningkatkan risiko iritasi dan merusak stabilitas retinol" },
-  { a: "retinol", b: "salicylic", tingkat: "tinggi", alasan: "Beban eksfoliasi berlebih untuk produk leave on harian" },
-  { a: "carbomer", b: "zinc", tingkat: "sedang", alasan: "Elektrolit tinggi menurunkan viskositas gel karbomer" },
-  { a: "vitc", b: "kojic", tingkat: "sedang", alasan: "Dua bahan rentan oksidasi, warna produk cepat menguning" },
-  { a: "aha", b: "tea", tingkat: "sedang", alasan: "Netralisasi berlebih membuat pH keluar dari jendela kerja asam" },
-  { a: "laa", b: "niacinamide", tingkat: "tinggi", alasan: "Asam askorbat bebas dan niacinamide pada pH di bawah 4 membentuk kompleks kuning dan asam nikotinat pemicu flushing" },
-  { a: "laa", b: "copper_peptide", tingkat: "tinggi", alasan: "Vitamin C mereduksi kompleks tembaga sehingga peptida kehilangan aktivitas" },
-  { a: "laa", b: "edta", tingkat: "sedang", alasan: "Kelator dibutuhkan, namun rasio harus dihitung agar tidak mengganggu kestabilan warna" },
-  { a: "arbutin", b: "aha", tingkat: "tinggi", alasan: "pH asam menghidrolisis arbutin menjadi hidrokuinon yang dilarang" },
-  { a: "benzoyl", b: "retinol", tingkat: "tinggi", alasan: "Peroksida mengoksidasi retinol sehingga potensi hilang dalam hitungan jam" },
-  { a: "benzoyl", b: "laa", tingkat: "tinggi", alasan: "Oksidasi silang membuat warna berubah dan kedua aktif terdegradasi" },
-  { a: "retinal", b: "aha", tingkat: "tinggi", alasan: "Gugus aldehid tidak stabil pada pH rendah dan beban iritasi bertambah" },
-  { a: "peptide_matrixyl", b: "aha", tingkat: "sedang", alasan: "pH rendah memutus rantai peptida sehingga klaim anti penuaan tidak tercapai" },
-  { a: "carbomer", b: "sci", tingkat: "sedang", alasan: "Surfaktan anionik dan elektrolit menurunkan viskositas gel karbomer secara tajam" },
-  { a: "carbomer", b: "niacinamide_hp", tingkat: "sedang", alasan: "Kadar aktif tinggi menambah beban ionik, gunakan polimer toleran elektrolit" },
-  { a: "avobenzone", b: "zinc_oxide", tingkat: "tinggi", alasan: "Zinc oxide mempercepat fotodegradasi avobenzone, butuh pelapis atau filter pengganti" },
-  { a: "avobenzone", b: "niacin_sunscreen", tingkat: "sedang", alasan: "Pasangan ini cepat kehilangan SPF tanpa fotostabilizer seperti Tinosorb S" },
-  { a: "sodium_benzoate", b: "laa", tingkat: "sedang", alasan: "Kombinasi berpotensi membentuk benzena jejak, hindari atau ganti pengawet" },
-  { a: "urea", b: "naoh", tingkat: "sedang", alasan: "pH tinggi menghidrolisis urea menjadi amonia sehingga aroma berubah" },
-  { a: "map", b: "zinc", tingkat: "sedang", alasan: "Ion divalen mengendapkan turunan askorbil fosfat" },
-  { a: "kolagen", b: "aha", tingkat: "sedang", alasan: "Hidrolisis lanjutan protein pada pH rendah menimbulkan bau dan kekeruhan" },
-  { a: "tea_tree", b: "carbomer", tingkat: "sedang", alasan: "Minyak esensial tanpa solubilizer membuat gel keruh dan berpisah" },
+/**
+ * Pre-check kompatibilitas lokal.
+ *
+ * Ini BUKAN salinan 165 rule F2 di paralab-architecture. Ini pemeriksaan cepat
+ * sisi klien supaya peneliti melihat masalah saat menyusun draf, sebelum API F3
+ * menjalankan F2 yang sesungguhnya. Setiap entri membawa rule ID, versi, dan
+ * sumbernya sendiri agar dapat diaudit dan dibedakan dari hasil F2 server.
+ */
+export type ClashRule = {
+  a: string;
+  b: string;
+  tingkat: "tinggi" | "sedang";
+  alasan: string;
+  ruleId: string;
+  ruleVersion: string;
+  severity: "blocked" | "warning";
+  sourceId: string;
+  perluTinjauanManusia: boolean;
+};
+
+export const CLASH_RULES: ClashRule[] = [
+  { a: "vitc", b: "niacinamide", tingkat: "sedang", ruleId: "WEB-COMPAT-001", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-001", perluTinjauanManusia: false, alasan: "Pada pH rendah dapat membentuk niacin yang memicu kemerahan, pisahkan fase atau jaga pH di atas 5" },
+  { a: "retinol", b: "aha", tingkat: "tinggi", ruleId: "WEB-COMPAT-002", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-002", perluTinjauanManusia: true, alasan: "Kombinasi eksfolian kuat meningkatkan risiko iritasi dan merusak stabilitas retinol" },
+  { a: "retinol", b: "salicylic", tingkat: "tinggi", ruleId: "WEB-COMPAT-003", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-003", perluTinjauanManusia: true, alasan: "Beban eksfoliasi berlebih untuk produk leave on harian" },
+  { a: "carbomer", b: "zinc", tingkat: "sedang", ruleId: "WEB-COMPAT-004", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-004", perluTinjauanManusia: false, alasan: "Elektrolit tinggi menurunkan viskositas gel karbomer" },
+  { a: "vitc", b: "kojic", tingkat: "sedang", ruleId: "WEB-COMPAT-005", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-005", perluTinjauanManusia: false, alasan: "Dua bahan rentan oksidasi, warna produk cepat menguning" },
+  { a: "aha", b: "tea", tingkat: "sedang", ruleId: "WEB-COMPAT-006", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-006", perluTinjauanManusia: false, alasan: "Netralisasi berlebih membuat pH keluar dari jendela kerja asam" },
+  { a: "laa", b: "niacinamide", tingkat: "tinggi", ruleId: "WEB-COMPAT-007", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-007", perluTinjauanManusia: true, alasan: "Asam askorbat bebas dan niacinamide pada pH di bawah 4 membentuk kompleks kuning dan asam nikotinat pemicu flushing" },
+  { a: "laa", b: "copper_peptide", tingkat: "tinggi", ruleId: "WEB-COMPAT-008", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-008", perluTinjauanManusia: true, alasan: "Vitamin C mereduksi kompleks tembaga sehingga peptida kehilangan aktivitas" },
+  { a: "laa", b: "edta", tingkat: "sedang", ruleId: "WEB-COMPAT-009", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-009", perluTinjauanManusia: false, alasan: "Kelator dibutuhkan, namun rasio harus dihitung agar tidak mengganggu kestabilan warna" },
+  { a: "arbutin", b: "aha", tingkat: "tinggi", ruleId: "WEB-COMPAT-010", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-010", perluTinjauanManusia: true, alasan: "pH asam menghidrolisis arbutin menjadi hidrokuinon yang dilarang" },
+  { a: "benzoyl", b: "retinol", tingkat: "tinggi", ruleId: "WEB-COMPAT-011", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-011", perluTinjauanManusia: true, alasan: "Peroksida mengoksidasi retinol sehingga potensi hilang dalam hitungan jam" },
+  { a: "benzoyl", b: "laa", tingkat: "tinggi", ruleId: "WEB-COMPAT-012", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-012", perluTinjauanManusia: true, alasan: "Oksidasi silang membuat warna berubah dan kedua aktif terdegradasi" },
+  { a: "retinal", b: "aha", tingkat: "tinggi", ruleId: "WEB-COMPAT-013", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-013", perluTinjauanManusia: true, alasan: "Gugus aldehid tidak stabil pada pH rendah dan beban iritasi bertambah" },
+  { a: "peptide_matrixyl", b: "aha", tingkat: "sedang", ruleId: "WEB-COMPAT-014", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-014", perluTinjauanManusia: false, alasan: "pH rendah memutus rantai peptida sehingga klaim anti penuaan tidak tercapai" },
+  { a: "carbomer", b: "sci", tingkat: "sedang", ruleId: "WEB-COMPAT-015", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-015", perluTinjauanManusia: false, alasan: "Surfaktan anionik dan elektrolit menurunkan viskositas gel karbomer secara tajam" },
+  { a: "carbomer", b: "niacinamide_hp", tingkat: "sedang", ruleId: "WEB-COMPAT-016", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-016", perluTinjauanManusia: false, alasan: "Kadar aktif tinggi menambah beban ionik, gunakan polimer toleran elektrolit" },
+  { a: "avobenzone", b: "zinc_oxide", tingkat: "tinggi", ruleId: "WEB-COMPAT-017", ruleVersion: RULE_VERSION, severity: "blocked", sourceId: "WEB-RULESRC-017", perluTinjauanManusia: true, alasan: "Zinc oxide mempercepat fotodegradasi avobenzone, butuh pelapis atau filter pengganti" },
+  { a: "avobenzone", b: "niacin_sunscreen", tingkat: "sedang", ruleId: "WEB-COMPAT-018", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-018", perluTinjauanManusia: false, alasan: "Pasangan ini cepat kehilangan SPF tanpa fotostabilizer seperti Tinosorb S" },
+  { a: "sodium_benzoate", b: "laa", tingkat: "sedang", ruleId: "WEB-COMPAT-019", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-019", perluTinjauanManusia: false, alasan: "Kombinasi berpotensi membentuk benzena jejak, hindari atau ganti pengawet" },
+  { a: "urea", b: "naoh", tingkat: "sedang", ruleId: "WEB-COMPAT-020", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-020", perluTinjauanManusia: false, alasan: "pH tinggi menghidrolisis urea menjadi amonia sehingga aroma berubah" },
+  { a: "map", b: "zinc", tingkat: "sedang", ruleId: "WEB-COMPAT-021", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-021", perluTinjauanManusia: false, alasan: "Ion divalen mengendapkan turunan askorbil fosfat" },
+  { a: "kolagen", b: "aha", tingkat: "sedang", ruleId: "WEB-COMPAT-022", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-022", perluTinjauanManusia: false, alasan: "Hidrolisis lanjutan protein pada pH rendah menimbulkan bau dan kekeruhan" },
+  { a: "tea_tree", b: "carbomer", tingkat: "sedang", ruleId: "WEB-COMPAT-023", ruleVersion: RULE_VERSION, severity: "warning", sourceId: "WEB-RULESRC-023", perluTinjauanManusia: false, alasan: "Minyak esensial tanpa solubilizer membuat gel keruh dan berpisah" },
 ];
 
 
@@ -1121,13 +1171,13 @@ export const TARGET_PRESET: TargetParam[] = [
 export const SEED_PROJECTS: Project[] = [
   {
     id: "prj-kahf-oil",
-    judul: "Kahf Oil Control Face Wash, Optimasi Sistem Pembersih",
+    judul: "Varko Oil Control Face Wash, Optimasi Sistem Pembersih",
     peneliti: "Dina Aprilia",
     tim: "Tim Grooming",
     kategori: "Perawatan Wajah Pria",
     status: "Sedang Berjalan",
     update: jam(7),
-    brief: "Studi simulasi pengembangan pembersih wajah pada kategori publik Kahf untuk kulit berminyak pria aktif. Formula dan hasil uji pada aplikasi bukan data produk komersial.",
+    brief: "Studi simulasi pengembangan pembersih wajah pada kategori publik Varko untuk kulit berminyak pria aktif. Formula dan hasil uji pada aplikasi bukan data produk komersial.",
     targets: TARGET_PRESET,
     batches: [
       {
@@ -1183,13 +1233,13 @@ export const SEED_PROJECTS: Project[] = [
   },
   {
     id: "prj-serum-cerah",
-    judul: "Wardah Brightening Serum, Optimasi Niacinamide Ringan",
+    judul: "Amarya Brightening Serum, Optimasi Niacinamide Ringan",
     peneliti: "Raka Wijaya",
     tim: "Tim Skin Care",
     kategori: "Serum Wajah",
     status: "Menunggu Tinjauan",
     update: jam(5),
-    brief: "Studi simulasi kategori serum pencerah Wardah dengan fokus sensori ringan, tidak lengket, dan kompatibilitas niacinamide. Formula bukan formula produk komersial.",
+    brief: "Studi simulasi kategori serum pencerah Amarya dengan fokus sensori ringan, tidak lengket, dan kompatibilitas niacinamide. Formula bukan formula produk komersial.",
     targets: TARGET_PRESET,
     batches: [
       {
@@ -1225,13 +1275,13 @@ export const SEED_PROJECTS: Project[] = [
   },
   {
     id: "prj-sunscreen",
-    judul: "Wardah UV Shield, Studi Sunscreen Hybrid Tanpa Whitecast",
+    judul: "Amarya UV Shield, Studi Sunscreen Hybrid Tanpa Whitecast",
     peneliti: "Nadia Puspita",
     tim: "Tim Sun Care",
     kategori: "Perlindungan Matahari",
     status: "Sedang Berjalan",
     update: jam(4),
-    brief: "Studi simulasi kategori perlindungan matahari Wardah untuk iklim tropis dengan tekstur ringan dan target residu putih rendah.",
+    brief: "Studi simulasi kategori perlindungan matahari Amarya untuk iklim tropis dengan tekstur ringan dan target residu putih rendah.",
     targets: TARGET_PRESET,
     batches: [
       {
@@ -1255,13 +1305,13 @@ export const SEED_PROJECTS: Project[] = [
   },
   {
     id: "prj-toner",
-    judul: "Emina Exfoliating Toner, Optimasi Asam Kadar Rendah",
+    judul: "Zevi Exfoliating Toner, Optimasi Asam Kadar Rendah",
     peneliti: "Farhan Maulana",
     tim: "Tim Skin Care",
     kategori: "Toner",
     status: "Selesai",
     update: jam(3),
-    brief: "Studi simulasi kategori toner Emina dengan asam glikolat kadar rendah untuk kulit kombinasi. Keamanan klaim tetap memerlukan pengujian terkontrol.",
+    brief: "Studi simulasi kategori toner Zevi dengan asam glikolat kadar rendah untuk kulit kombinasi. Keamanan klaim tetap memerlukan pengujian terkontrol.",
     targets: TARGET_PRESET,
     batches: [
       {
@@ -1294,13 +1344,13 @@ export const SEED_PROJECTS: Project[] = [
   },
   {
     id: "prj-body",
-    judul: "Wardah Lightening Body Lotion, Studi Hidrasi 24 Jam",
+    judul: "Amarya Lightening Body Lotion, Studi Hidrasi 24 Jam",
     peneliti: "Intan Rahmawati",
     tim: "Tim Body Care",
     kategori: "Perawatan Tubuh",
     status: "Draft",
     update: jam(2),
-    brief: "Studi simulasi kategori body lotion Wardah dengan target hidrasi 24 jam dan profil sensori yang sesuai untuk iklim tropis.",
+    brief: "Studi simulasi kategori body lotion Amarya dengan target hidrasi 24 jam dan profil sensori yang sesuai untuk iklim tropis.",
     targets: TARGET_PRESET,
     batches: [],
   },

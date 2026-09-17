@@ -1,4 +1,4 @@
-import { BAHAN_LIBRARY, type Batch, type Ingredient, type Project, type TargetParam } from "./data";
+import { BAHAN_LIBRARY, type Batch, type Checkpoint, type Ingredient, type Project, type TargetParam } from "./data";
 
 export type ParamGrup =
   | "Fisikokimia"
@@ -306,26 +306,39 @@ function buatBatch(nomor: number, kategori: string, targets: TargetParam[], isi:
 type Ringkas = { id: string; judul: string; peneliti: string; tim: string; kategori: string; status: Project["status"]; brief: string; batch: ("penuh" | "sebagian" | "kosong")[]; kirim?: string };
 
 const DAFTAR: Ringkas[] = [
-  { id: "prj-mist-centella", judul: "Wardah C-Defense Face Mist, Studi Hidrasi", peneliti: "Samuel Kevin", tim: "Tim Skin Care", kategori: "Face Mist", status: "Sedang Berjalan", brief: "Studi simulasi kategori face mist Wardah dengan fokus hidrasi, pola semprot, dan kenyamanan setelah pemakaian.", batch: ["penuh", "sebagian"] },
-  { id: "prj-eye-collagen", judul: "Crystallure Eye Cream, Studi Sensori Area Mata", peneliti: "Intan Rahmawati", tim: "Tim Skin Care", kategori: "Eye Cream", status: "Sedang Berjalan", brief: "Studi simulasi kategori perawatan mata Crystallure dengan fokus daya sebar, iritasi, dan stabilitas emulsi.", batch: ["penuh", "sebagian"] },
-  { id: "prj-acne-spot", judul: "Emina Ms. Pimple Spot Gel, Studi Salisilat", peneliti: "Raka Wijaya", tim: "Tim Derma", kategori: "Acne Spot Gel", status: "Menunggu Tinjauan", brief: "Studi simulasi kategori acne spot Emina dengan salisilat kadar rendah dan evaluasi tolerabilitas pemakaian malam.", batch: ["penuh", "penuh"] },
-  { id: "prj-sun-gel", judul: "Labore BiomeProtect Sunscreen, Studi Tekstur Gel", peneliti: "Nadia Puspita", tim: "Tim Sun Care", kategori: "Sunscreen Gel Ringan", status: "Sedang Berjalan", brief: "Studi simulasi kategori sunscreen Labore dengan fokus sensori ringan, UVA-PF, SPF, dan stabilitas pada iklim lembap.", batch: ["penuh", "sebagian"] },
-  { id: "prj-sun-stick", judul: "Kahf Sunscreen Stick, Studi Reaplikasi Luar Ruang", peneliti: "Farhan Maulana", tim: "Tim Sun Care", kategori: "Sunscreen Stick", status: "Draft", brief: "Studi simulasi kategori sunscreen stick Kahf untuk reaplikasi cepat, ketahanan panas, dan gaya gesek saat aplikasi.", batch: ["kosong"] },
+  { id: "prj-mist-centella", judul: "Amarya C-Defense Face Mist, Studi Hidrasi", peneliti: "Samuel Kevin", tim: "Tim Skin Care", kategori: "Face Mist", status: "Sedang Berjalan", brief: "Studi simulasi kategori face mist Amarya dengan fokus hidrasi, pola semprot, dan kenyamanan setelah pemakaian.", batch: ["penuh", "sebagian"] },
+  { id: "prj-eye-collagen", judul: "Vellure Eye Cream, Studi Sensori Area Mata", peneliti: "Intan Rahmawati", tim: "Tim Skin Care", kategori: "Eye Cream", status: "Sedang Berjalan", brief: "Studi simulasi kategori perawatan mata Vellure dengan fokus daya sebar, iritasi, dan stabilitas emulsi.", batch: ["penuh", "sebagian"] },
+  { id: "prj-acne-spot", judul: "Zevi Ms. Pimple Spot Gel, Studi Salisilat", peneliti: "Raka Wijaya", tim: "Tim Derma", kategori: "Acne Spot Gel", status: "Menunggu Tinjauan", brief: "Studi simulasi kategori acne spot Zevi dengan salisilat kadar rendah dan evaluasi tolerabilitas pemakaian malam.", batch: ["penuh", "penuh"] },
+  { id: "prj-sun-gel", judul: "Solvea BiomeProtect Sunscreen, Studi Tekstur Gel", peneliti: "Nadia Puspita", tim: "Tim Sun Care", kategori: "Sunscreen Gel Ringan", status: "Sedang Berjalan", brief: "Studi simulasi kategori sunscreen Solvea dengan fokus sensori ringan, UVA-PF, SPF, dan stabilitas pada iklim lembap.", batch: ["penuh", "sebagian"] },
+  { id: "prj-sun-stick", judul: "Varko Sunscreen Stick, Studi Reaplikasi Luar Ruang", peneliti: "Farhan Maulana", tim: "Tim Sun Care", kategori: "Sunscreen Stick", status: "Draft", brief: "Studi simulasi kategori sunscreen stick Varko untuk reaplikasi cepat, ketahanan panas, dan gaya gesek saat aplikasi.", batch: ["kosong"] },
   { id: "prj-clay-mask", judul: "Clay Mask Kaolin Pori Bersih", peneliti: "Dina Aprilia", tim: "Tim Skin Care", kategori: "Clay Mask", status: "Sedang Berjalan", brief: "Masker tanah liat mingguan untuk kulit berminyak dengan pori terlihat besar.", batch: ["penuh", "sebagian"] },
   { id: "prj-sleep-mask", judul: "Sleeping Mask Barrier Repair", peneliti: "Intan Rahmawati", tim: "Tim Skin Care", kategori: "Sleeping Mask", status: "Menunggu Tinjauan", brief: "Masker tidur untuk memperbaiki skin barrier setelah eksfoliasi.", batch: ["penuh"] },
-  { id: "prj-micellar", judul: "Wardah Lightening Micellar Water, Studi Mildness", peneliti: "Samuel Kevin", tim: "Tim Cleansing", kategori: "Micellar Water", status: "Sedang Berjalan", brief: "Studi simulasi kategori micellar water Wardah dengan fokus efisiensi pembersihan, kejernihan, dan kenyamanan mata.", batch: ["penuh", "kosong"] },
-  { id: "prj-balm", judul: "Make Over Cleansing Balm, Studi Daya Angkat Riasan", peneliti: "Farhan Maulana", tim: "Tim Cleansing", kategori: "Cleansing Balm", status: "Sedang Berjalan", brief: "Studi simulasi kategori cleansing balm Make Over untuk riasan tahan lama dengan evaluasi titik leleh dan residu setelah bilas.", batch: ["penuh", "sebagian"] },
+  { id: "prj-micellar", judul: "Amarya Lightening Micellar Water, Studi Mildness", peneliti: "Samuel Kevin", tim: "Tim Cleansing", kategori: "Micellar Water", status: "Sedang Berjalan", brief: "Studi simulasi kategori micellar water Amarya dengan fokus efisiensi pembersihan, kejernihan, dan kenyamanan mata.", batch: ["penuh", "kosong"] },
+  { id: "prj-balm", judul: "Belloque Cleansing Balm, Studi Daya Angkat Riasan", peneliti: "Farhan Maulana", tim: "Tim Cleansing", kategori: "Cleansing Balm", status: "Sedang Berjalan", brief: "Studi simulasi kategori cleansing balm Belloque untuk riasan tahan lama dengan evaluasi titik leleh dan residu setelah bilas.", batch: ["penuh", "sebagian"] },
   { id: "prj-retinol", judul: "Serum Retinol Pemula Kadar Rendah", peneliti: "Raka Wijaya", tim: "Tim Derma", kategori: "Serum Anti Penuaan", status: "Sedang Berjalan", brief: "Serum retinol untuk pemula dengan penekanan pada kestabilan cahaya dan kenyamanan kulit.", batch: ["penuh", "sebagian"] },
   { id: "prj-ampoule", judul: "Ampoule Hidrasi Intensif Musim Kemarau", peneliti: "Nadia Puspita", tim: "Tim Skin Care", kategori: "Ampoule Intensif", status: "Draft", brief: "Ampoule hidrasi untuk kulit dehidrasi pada musim kemarau panjang.", batch: ["kosong"] },
   { id: "prj-body-butter", judul: "Body Butter Kakao Kelembapan Dalam", peneliti: "Dina Aprilia", tim: "Tim Body Care", kategori: "Body Butter", status: "Sedang Berjalan", brief: "Butter tubuh kaya emolien untuk kulit sangat kering di area siku dan lutut.", batch: ["penuh", "sebagian"] },
   { id: "prj-body-wash", judul: "Body Wash Lembut pH Seimbang", peneliti: "Intan Rahmawati", tim: "Tim Body Care", kategori: "Body Wash", status: "Selesai", brief: "Sabun mandi cair dengan pH seimbang untuk pemakaian harian seluruh keluarga.", batch: ["penuh", "penuh"], kirim: "Divisi Produksi" },
   { id: "prj-scrub", judul: "Body Scrub Butiran Halus Kopi Gayo", peneliti: "Farhan Maulana", tim: "Tim Body Care", kategori: "Body Scrub", status: "Menunggu Tinjauan", brief: "Lulur tubuh dengan butiran halus untuk eksfoliasi mingguan tanpa iritasi.", batch: ["penuh"] },
   { id: "prj-hand", judul: "Hand Cream Cepat Meresap Non Lengket", peneliti: "Samuel Kevin", tim: "Tim Body Care", kategori: "Hand Cream", status: "Sedang Berjalan", brief: "Krim tangan untuk pekerja kantor yang sering mencuci tangan.", batch: ["penuh", "sebagian"] },
-  { id: "prj-lip", judul: "Make Over Lip Serum, Studi Kilap dan Pigmen", peneliti: "Nadia Puspita", tim: "Tim Colour", kategori: "Lip Serum", status: "Sedang Berjalan", brief: "Studi simulasi kategori lip serum Make Over dengan evaluasi kilap, kestabilan pigmen, migrasi, dan rasa lengket.", batch: ["penuh", "sebagian"] },
+  { id: "prj-lip", judul: "Belloque Lip Serum, Studi Kilap dan Pigmen", peneliti: "Nadia Puspita", tim: "Tim Colour", kategori: "Lip Serum", status: "Sedang Berjalan", brief: "Studi simulasi kategori lip serum Belloque dengan evaluasi kilap, kestabilan pigmen, migrasi, dan rasa lengket.", batch: ["penuh", "sebagian"] },
   { id: "prj-shampoo", judul: "Shampoo Lembut Kulit Kepala Sensitif", peneliti: "Raka Wijaya", tim: "Tim Hair Care", kategori: "Shampoo Lembut", status: "Sedang Berjalan", brief: "Sampo tanpa sulfat keras untuk kulit kepala sensitif dan mudah gatal.", batch: ["penuh", "sebagian"] },
   { id: "prj-conditioner", judul: "Conditioner Pelembut Rambut Diwarnai", peneliti: "Dina Aprilia", tim: "Tim Hair Care", kategori: "Conditioner", status: "Draft", brief: "Kondisioner untuk rambut diwarnai agar warna lebih tahan dan mudah disisir.", batch: ["kosong"] },
   { id: "prj-deo", judul: "Deodoran Roll On Bebas Alkohol", peneliti: "Intan Rahmawati", tim: "Tim Personal Care", kategori: "Deodoran Roll On", status: "Menunggu Tinjauan", brief: "Deodoran bebas alkohol dengan aroma segar tahan dua belas jam.", batch: ["penuh", "penuh"] },
   { id: "prj-essence", judul: "Essence Ringan Lapisan Pertama Hidrasi", peneliti: "Samuel Kevin", tim: "Tim Skin Care", kategori: "Essence Ringan", status: "Sedang Berjalan", brief: "Essence lapis pertama untuk mempersiapkan kulit sebelum serum.", batch: ["penuh", "sebagian"] },
+  // Satu-satunya proyek yang berada di dalam domain F3 (gel-cream O/W kulit
+  // berminyak). Dipakai untuk memperlihatkan alur lengkap checkpoint -> F3.
+  { id: "prj-gelcream-oily", judul: "Pelembap Gel-Cream Kulit Berminyak", peneliti: "Dina Aprilia", tim: "Tim Skin Care", kategori: "Pelembap Krim", status: "Sedang Berjalan", brief: "Moisturizer gel-cream oil-in-water untuk kulit berminyak, satu-satunya kategori yang saat ini didukung F3 Stability Sentinel.", batch: ["sebagian"] },
+];
+
+/**
+ * Checkpoint terkonfirmasi untuk proyek di dalam domain F3.
+ * Tren viskositas sengaja menurun agar panel sentinel punya sinyal untuk dibaca.
+ */
+const CHECKPOINT_GELCREAM: Checkpoint[] = [
+  { minggu: 0, ph: 5.42, viskositasCp: 6480, penampilan: "uniform", sumber: "manual", dikonfirmasi: true, dikonfirmasiOleh: "Dina Aprilia", waktu: waktu(30) },
+  { minggu: 2, ph: 5.31, viskositasCp: 6120, penampilan: "uniform", sumber: "sensor", dikonfirmasi: true, dikonfirmasiOleh: "Dina Aprilia", waktu: waktu(16) },
+  { minggu: 4, ph: 5.12, viskositasCp: 4950, penampilan: "uniform", sumber: "sensor", dikonfirmasi: true, dikonfirmasiOleh: "Dina Aprilia", waktu: waktu(2) },
 ];
 
 export const EXTRA_PROJECTS: Project[] = DAFTAR.map((r, idx) => {
@@ -340,7 +353,16 @@ export const EXTRA_PROJECTS: Project[] = DAFTAR.map((r, idx) => {
     update: waktu(idx % 9, 8 + (idx % 6)),
     brief: r.brief,
     targets,
-    batches: r.batch.map((isi, i) => buatBatch(i + 1, r.kategori, targets, isi, r.batch.length - i + (idx % 4))),
+    batches: r.batch.map((isi, i) => {
+      const batch = buatBatch(i + 1, r.kategori, targets, isi, r.batch.length - i + (idx % 4));
+      if (r.id === "prj-gelcream-oily" && i === 0) {
+        batch.checkpoints = CHECKPOINT_GELCREAM.map((c) => ({ ...c }));
+        batch.proses = { heating_temp_c: 75, homogenization_rpm: 3200, mixing_time_min: 8 };
+        batch.suhuSimpanC = 40;
+        batch.status = "pemantauan";
+      }
+      return batch;
+    }),
     dikirimKe: r.kirim,
   };
 });

@@ -6,8 +6,6 @@ type Props = {
   screening: F2Screening | null;
   loading: boolean;
   error: string | null;
-  /** Field F3 yang masih belum dikumpulkan UI. */
-  missingF3: string[];
 };
 
 function statusVariant(status: string): "bahaya" | "waspada" | "aman" | "netral" {
@@ -17,7 +15,7 @@ function statusVariant(status: string): "bahaya" | "waspada" | "aman" | "netral"
   return "netral";
 }
 
-export function FormulaScreeningCard({ screening, loading, error, missingF3 }: Props) {
+export function FormulaScreeningCard({ screening, loading, error }: Props) {
   const flagged = screening?.results.filter((item) => item.rules_fired.length > 0) ?? [];
   const features = Object.entries(screening?.derived_features ?? {});
 
@@ -94,24 +92,6 @@ export function FormulaScreeningCard({ screening, loading, error, missingF3 }: P
               <ShieldCheck className="size-3.5 shrink-0" />
               Butuh sign-off manusia sebelum keputusan lanjutan
             </p>
-          )}
-
-          {missingF3.length > 0 && (
-            <div className="border-t border-border pt-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Prediksi F3 belum bisa dijalankan
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Data berikut masih perlu dikumpulkan:
-              </p>
-              <ul className="mt-1.5 space-y-0.5 text-xs text-foreground">
-                {missingF3.map((field) => (
-                  <li key={field} className="font-mono">
-                    {field}
-                  </li>
-                ))}
-              </ul>
-            </div>
           )}
         </div>
       )}

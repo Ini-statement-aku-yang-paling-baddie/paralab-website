@@ -147,9 +147,9 @@ export function susunScaleUpBrief(proyek: Project, batch: Batch): ScaleUpBrief {
     parameter: parameter.sort((a, b) => b.skor - a.skor),
     tahapan,
     halal:
-      kepatuhan.status === "halal"
-        ? "Seluruh bahan berstatus halal dan tercatat pemasoknya. Pastikan fasilitas produksi bebas kontaminasi silang sesuai HAS 23000."
-        : "Status " + kepatuhan.status + ". Terdapat bahan yang perlu verifikasi sertifikat halal sebelum produksi massal.",
+      kepatuhan.status === "clear_for_current_screening"
+        ? "Tidak ada rule halal prototipe yang aktif pada formula ini. Status ini bukan sertifikasi: verifikasi dokumen pemasok dan audit fasilitas tetap wajib sesuai HAS 23000."
+        : "Skrining prototipe: " + kepatuhan.label + ". Terdapat bahan yang perlu verifikasi sertifikat halal sebelum produksi massal.",
     klaim,
     hpp: [
       { label: "HPP bahan baku per kemasan", nilai: formatRupiah(hppData.per50ml) },

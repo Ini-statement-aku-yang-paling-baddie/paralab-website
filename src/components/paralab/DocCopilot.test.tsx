@@ -2,11 +2,26 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { DocCopilot } from "./DocCopilot";
+import type { Batch, Project } from "@/lib/paralab/data";
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+
+const PROYEK = {
+  id: "serum-pencerah",
+  judul: "Serum Pencerah",
+  peneliti: "Dina Aprilia",
+  targets: [],
+} as unknown as Project;
+
+const BATCH = {
+  nomor: 2,
+  bahan: [],
+  hasil: [],
+  prosedur: [],
+} as unknown as Batch;
 
 function mockFetch(payload: unknown, status = 200) {
   vi.stubGlobal(
@@ -43,7 +58,7 @@ const ABSTAIN = {
 };
 
 function tanya(pertanyaan: string) {
-  render(<DocCopilot judul="Serum Pencerah" batchNomor={2} onTutup={() => {}} />);
+  render(<DocCopilot proyek={PROYEK} batch={BATCH} onTutup={() => {}} />);
   fireEvent.change(screen.getByPlaceholderText(/tanya tentang jurnal ini/i), {
     target: { value: pertanyaan },
   });
@@ -85,11 +100,15 @@ describe("DocCopilot", () => {
     expect(screen.queryByText(/Gel-cream/)).toBeNull();
   });
 
-  it("menampilkan pesan error saat gateway menolak", async () => {
-    mockFetch({ detail: "retrieval unavailable" }, 503);
-    tanya("kenapa viskositas turun");
+  it("jatuh ke rule lokal dan menandainya saat gateway tidak tersedia", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
+    );
+    tanya("berapa perkiraan hpp");
 
-    expect(await screen.findByText(/retrieval unavailable/)).toBeTruthy();
+    expect(await screen.findByText(/jawaban rule lokal/i)).toBeTruthy();
+    expect(screen.getByText(/gateway model tidak tersedia/i)).toBeTruthy();
   });
 
   it("tidak menawarkan kontrol persen atau konsentrasi", async () => {

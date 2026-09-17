@@ -168,12 +168,12 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
           .join("");
 
   return [
-    "<div class='doc-brand'><img src='" + logoDark + "' alt='paralab.ai, Electronic Lab Notebook Paragon R&amp;D'></div>",
+    "<div class='doc-brand'><img src='" + logoDark + "' alt='paralab.ai, Electronic Lab Notebook Vinara R&amp;D'></div>",
     "<p class='doc-meta'><strong>Hari / Tanggal Praktikum:</strong> " + tanggal + "<br><strong>Peneliti:</strong> " + proyek.peneliti + "<br><strong>Nomor Dokumen:</strong> " + kodeBatch + "<br><strong>Status:</strong> " + batch.status + "</p>",
     "<p class='doc-module'>MODUL R&amp;D FORMULASI KOSMETIK</p>",
     "<h1>" + proyek.judul + "</h1>",
     "<p class='doc-subtitle'>Batch " + batch.nomor + " &middot; " + proyek.kategori + " &middot; Skala laboratorium 500 gram</p>",
-    "<p class='doc-disclaimer'><strong>DATA SIMULASI.</strong> Dokumen demonstrasi ini tidak memuat formula, hasil uji, personel, atau data internal nyata ParagonCorp maupun mereknya. Semua keputusan pengembangan wajib diverifikasi melalui metode tervalidasi, spesifikasi terkini, kajian keselamatan, dan persetujuan fungsi berwenang.</p>",
+    "<p class='doc-disclaimer'><strong>DATA SIMULASI.</strong> Dokumen demonstrasi ini tidak memuat formula, hasil uji, personel, atau data internal nyata Vinara maupun mereknya. Semua keputusan pengembangan wajib diverifikasi melalui metode tervalidasi, spesifikasi terkini, kajian keselamatan, dan persetujuan fungsi berwenang.</p>",
 
     "<h2>I. Identitas Penelitian dan Kendali Dokumen</h2>",
     "<table><tbody>" +
@@ -219,7 +219,7 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
     "<p>Catatan pengaturan pH kerja: seluruh bahan aktif harus berada pada jendela pH yang saling beririsan. Bila tidak beririsan, pisahkan bahan ke fase berbeda atau gunakan bentuk derivat yang lebih stabil.</p>",
 
     "<h2>IX. Kajian Awal Regulasi dan Halal</h2>",
-    "<p>Status halal formula saat ini: " + patuh.status + ". Bahan berstatus perlu verifikasi: " + (patuh.syubhat.length === 0 ? "tidak ada" : patuh.syubhat.map((b) => b.name).join(", ")) + ".</p>",
+    "<p>Skrining rule prototipe versi " + patuh.ruleVersion + " menghasilkan status: " + patuh.label + ". Status ini berasal dari rule engine internal dan <strong>bukan</strong> persetujuan BPOM, MUI, atau keamanan. Bahan berstatus perlu verifikasi: " + (patuh.syubhat.length === 0 ? "tidak ada" : patuh.syubhat.map((b) => b.name).join(", ")) + ".</p>",
     "<table><thead><tr><th>Bahan</th><th>Status BPOM</th><th>Batas maksimal</th><th>Status halal</th><th>Catatan verifikasi</th></tr></thead><tbody>" + barisRegulasi + "</tbody></table>",
 
     "<h2>X. Kontrol Mutu Bahan Baku</h2>",

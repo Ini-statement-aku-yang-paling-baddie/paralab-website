@@ -15,6 +15,8 @@ import type { Batch, CitraStabilitasEntry, Project } from "@/lib/paralab/data";
 import { actions } from "@/lib/paralab/store";
 import { jadwalFotoDroplet } from "@/lib/paralab/pemantauan";
 import { analisaPiksel } from "@/lib/paralab/prediksi";
+import { BATAS_CV } from "@/lib/paralab/kontrak";
+import { BandProvenance, DaftarBatas } from "./BandProvenance";
 import { Card, CardTitle, GhostButton, Pill, PrimaryButton } from "./ui";
 
 type Props = {
@@ -118,8 +120,13 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
     <Card className="mt-5">
       <CardTitle
         title="Proses uji coba sampel stabilitas"
-        sub="Computer vision droplet bekerja pada fase ini melalui foto sampel tiap tiga hari."
+        sub="Analisis citra droplet mengusulkan observasi dari foto sampel tiap tiga hari."
         right={<Pill variant={aktif ? "brand" : "netral"}>{aktif ? "berjalan" : "belum dimulai"}</Pill>}
+      />
+
+      <BandProvenance
+        lapis="heuristik"
+        tambahan="Pilot CV belum tervalidasi untuk foto lab nyata dan tidak menulis checkpoint sendiri."
       />
 
       {!aktif ? (
@@ -251,6 +258,7 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
           )}
         </div>
       )}
+      <DaftarBatas judul="Batas analisis citra" batas={BATAS_CV} />
     </Card>
   );
 }

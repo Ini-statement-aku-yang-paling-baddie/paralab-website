@@ -5,8 +5,6 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,6 +13,7 @@ import {
 import {
   AlertTriangle,
   ArrowUpRight,
+  Check,
   CheckCircle2,
   Download,
   FileText,
@@ -22,6 +21,7 @@ import {
   Radio,
   Send,
   Sparkles,
+  X,
 } from "lucide-react";
 import { AppShell } from "@/components/paralab/AppShell";
 import {
@@ -35,40 +35,25 @@ import {
   inputClass,
 } from "@/components/paralab/ui";
 import { SENSORS, formatRupiah, hitungHpp } from "@/lib/paralab/data";
-import type { Batch, Project } from "@/lib/paralab/data";
 import { PARAM_LIBRARY } from "@/lib/paralab/catalog";
-import { deteksiClash, evaluasiBatch, kurvaStabilitas, ringkasKepatuhan } from "@/lib/paralab/ai";
+import { deteksiClash, evaluasiBatch, ringkasKepatuhan } from "@/lib/paralab/ai";
 import { actions, useAppState, useProject } from "@/lib/paralab/store";
 import { bacaSatuSensor } from "@/hooks/use-sensors";
 import { PanelPemantauan } from "@/components/paralab/PanelPemantauan";
 import { UjiSampelStabilitas } from "@/components/paralab/UjiSampelStabilitas";
+import { PanelCheckpoint } from "@/components/paralab/PanelCheckpoint";
+import { PanelSentinel } from "@/components/paralab/PanelSentinel";
+import { BandProvenance, JejakRule } from "@/components/paralab/BandProvenance";
+import { unduhScaleUpBrief } from "@/lib/paralab/scaleup";
 import { NextValidationCard } from "@/components/paralab/NextValidationCard";
 import { FormulaScreeningCard } from "@/components/paralab/FormulaScreeningCard";
 import { ModelApiError, postJson } from "@/lib/paralab/api";
 import { toF4Request, type F4Recommendation } from "@/lib/paralab/f4-adapter";
-import {
-  missingF3Inputs,
-  toF2Request,
-  toF3Request,
-  type F2Screening,
-  type F3Inputs,
-} from "@/lib/paralab/model-adapters";
-import { unduhScaleUpBrief } from "@/lib/paralab/scaleup";
+import { toF2Request, type F2Screening } from "@/lib/paralab/model-adapters";
 
 /**
- * Menyusun input F3 dari state jurnal. Field yang belum dikumpulkan UI sengaja
- * dibiarkan kosong supaya `missingF3Inputs` melaporkannya, bukan dikarang.
- */
-function f3InputsFromBatch(proyek: Project, batch: Batch): F3Inputs {
-  return {
-    trialId: `${proyek.id}-batch-${batch.nomor}`,
-    formula: batch.bahan.map((item) => ({ bahan: item.name, pct: item.percent })),
-  };
-}
-
-/**
- * Payload F3 contoh untuk demo F4. Sengaja statis: UI belum mengumpulkan
- * kondisi proses dan checkpoint yang dibutuhkan F3 sungguhan.
+ * Payload F3 contoh untuk demo F4. Sengaja statis sampai F4 disambungkan ke
+ * keluaran F3 asli dari PanelSentinel.
  */
 const SAMPLE_F3 = {
   decision: "flag_high_risk",
@@ -111,14 +96,14 @@ function JurnalDetail() {
   const proyek = useProject(id);
   const { user } = useAppState();
   const [aktif, setAktif] = useState(search.batch ?? 1);
-  const [f4Recommendation, setF4Recommendation] = useState<F4Recommendation | null>(null);
-  const [f4Loading, setF4Loading] = useState(false);
-  const [f4Error, setF4Error] = useState<string | null>(null);
+  // Usulan sensor yang belum dikonfirmasi peneliti. Nilai di sini belum masuk jurnal.
+  const [usulanSensor, setUsulanSensor] = useState<Record<string, number>>({});
   const [f2Screening, setF2Screening] = useState<F2Screening | null>(null);
   const [f2Loading, setF2Loading] = useState(false);
   const [f2Error, setF2Error] = useState<string | null>(null);
-  const [f3Error, setF3Error] = useState<string | null>(null);
-  const [missingF3, setMissingF3] = useState<string[]>([]);
+  const [f4Recommendation, setF4Recommendation] = useState<F4Recommendation | null>(null);
+  const [f4Loading, setF4Loading] = useState(false);
+  const [f4Error, setF4Error] = useState<string | null>(null);
 
   if (!proyek) {
     return (
@@ -141,7 +126,6 @@ function JurnalDetail() {
   const hpp = hitungHpp(batch.bahan);
   const kepatuhan = ringkasKepatuhan(batch.bahan);
   const clashes = deteksiClash(batch.bahan);
-  const stabilitas = kurvaStabilitas(batch.bahan);
 
   const terisi = batch.hasil.filter((h) => h.nilai !== null).length;
   const lengkap = terisi === proyek.targets.length && proyek.targets.length > 0;
@@ -156,8 +140,28 @@ function JurnalDetail() {
     return h?.nilai != null && Math.abs(h.nilai - t.target) <= t.toleransi;
   }).length;
 
-  function isiDariSensor(paramId: string, sensorId: string) {
+  /**
+   * Sensor hanya MENGUSULKAN nilai. Aturan #5 arsitektur melarang sistem menulis
+   * hasil uji tanpa konfirmasi manusia, jadi pembacaan ditahan di state lokal
+   * sampai peneliti menekan Konfirmasi.
+   */
+  function usulkanDariSensor(paramId: string, sensorId: string) {
     const nilai = bacaSatuSensor(sensorId);
+    if (nilai === null) return;
+    setUsulanSensor((u) => ({ ...u, [paramId]: nilai }));
+  }
+
+  function tolakUsulan(paramId: string) {
+    setUsulanSensor((u) => {
+      const salinan = { ...u };
+      delete salinan[paramId];
+      return salinan;
+    });
+  }
+
+  function konfirmasiUsulan(paramId: string, sensorId: string) {
+    const nilai = usulanSensor[paramId];
+    if (nilai === undefined) return;
     actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({
       ...b,
       status: b.status === "draft" ? "berjalan" : b.status,
@@ -170,10 +174,11 @@ function JurnalDetail() {
     actions.catat(
       nama,
       proyek!.judul,
-      "Pembacaan sensor",
-      "Nilai " + nilai + " diambil langsung dari sensor untuk batch " + batch.nomor,
+      "Pembacaan sensor dikonfirmasi",
+      "Peneliti mengesahkan nilai " + nilai + " dari sensor untuk batch " + batch.nomor,
       sensorId,
     );
+    tolakUsulan(paramId);
   }
 
   function isiManual(paramId: string, nilai: number) {
@@ -192,8 +197,6 @@ function JurnalDetail() {
     if (f2Loading) return;
     setF2Loading(true);
     setF2Error(null);
-    setF3Error(null);
-
     try {
       const screening = await postJson<F2Screening>("/v1/f2/health-check", toF2Request(batch));
       setF2Screening(screening);
@@ -201,30 +204,6 @@ function JurnalDetail() {
       setF2Screening(null);
       setF2Error(
         cause instanceof ModelApiError ? cause.message : "Gateway model tidak dapat dihubungi.",
-      );
-    }
-
-    const inputs = f3InputsFromBatch(proyek!, batch);
-    const missing = missingF3Inputs(inputs);
-    setMissingF3(missing);
-    if (missing.length > 0) {
-      setF2Loading(false);
-      return;
-    }
-
-    try {
-      const forecast = await postJson<Record<string, unknown>>(
-        "/v1/f3/forecasts",
-        toF3Request(inputs),
-      );
-      const recommendation = await postJson<F4Recommendation>(
-        "/v1/f4/next-validation",
-        toF4Request(forecast, null),
-      );
-      setF4Recommendation(recommendation);
-    } catch (cause) {
-      setF3Error(
-        cause instanceof ModelApiError ? cause.message : "Forecast F3 tidak dapat dijalankan.",
       );
     } finally {
       setF2Loading(false);
@@ -345,7 +324,11 @@ function JurnalDetail() {
         />
         <Stat label="Parameter lolos" value={String(lolos)} hint="Berada dalam rentang toleransi" />
         <Stat label="Perkiraan HPP" value={formatRupiah(hpp.total)} hint="Per kemasan 50 ml" />
-        <Stat label="Status kepatuhan" value={kepatuhan.status} hint="Halal dan batas BPOM" />
+        <Stat
+          label="Skrining rule"
+          value={kepatuhan.label}
+          hint={"Rule prototipe v" + kepatuhan.ruleVersion + ", bukan approval"}
+        />
       </StatStrip>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-3">
@@ -432,24 +415,39 @@ function JurnalDetail() {
           </Card>
 
           <Card>
-            <CardTitle title="Peringatan clash" />
+            <CardTitle
+              title="Pre-check kompatibilitas"
+              sub="Pemeriksaan cepat sisi klien sebelum F2 dijalankan server"
+            />
+            <BandProvenance lapis="rule" />
             {clashes.length === 0 ? (
-              <p className="flex items-center gap-2 text-sm font-medium text-success">
-                <CheckCircle2 className="size-4" /> Tidak ada interaksi berisiko.
+              <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <CheckCircle2 className="size-4 text-muted-foreground" /> Tidak ada rule pre-check
+                yang aktif. Ini bukan pernyataan formula aman.
               </p>
             ) : (
               <ul className="space-y-2 text-xs">
-                {clashes.map((c, i) => (
-                  <li key={i} className="rounded-xl border border-border p-2.5">
+                {clashes.map((c) => (
+                  <li key={c.ruleId} className="rounded-xl border border-border p-2.5">
                     <p className="flex items-center gap-1.5 text-sm font-semibold">
                       <AlertTriangle
                         className={
-                          c.tingkat === "tinggi" ? "size-4 text-danger" : "size-4 text-warning"
+                          c.severity === "blocked" ? "size-4 text-danger" : "size-4 text-warning"
                         }
                       />
                       {c.a} dan {c.b}
+                      <span className="ml-auto text-[10px] font-bold uppercase text-muted-foreground">
+                        {c.severity}
+                      </span>
                     </p>
                     <p className="mt-1 text-muted-foreground">{c.alasan}</p>
+                    <p className="mt-1.5">
+                      <JejakRule
+                        ruleId={c.ruleId}
+                        ruleVersion={c.ruleVersion}
+                        sourceId={c.sourceId}
+                      />
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -461,8 +459,9 @@ function JurnalDetail() {
       <Card className="mt-5">
         <CardTitle
           title="Tabel hasil uji"
-          sub="Setiap parameter diambil dari kanal sensor laboratorium atau diisi manual bila alat luring."
+          sub="Sensor mengusulkan, peneliti mengonfirmasi. Nilai baru masuk jurnal setelah dikonfirmasi."
         />
+        <BandProvenance lapis="sensor" />
         <div className="overflow-x-auto">
           <table className="table-clear w-full text-sm">
             <thead>
@@ -480,6 +479,7 @@ function JurnalDetail() {
                 const h = batch.hasil.find((x) => x.paramId === t.id);
                 const nilai = h?.nilai ?? null;
                 const ok = nilai !== null && Math.abs(nilai - t.target) <= t.toleransi;
+                const usulan = usulanSensor[t.id];
                 return (
                   <tr key={t.id} className="border-b border-border/70">
                     <td className="py-2.5 pr-3">
@@ -507,7 +507,9 @@ function JurnalDetail() {
                       {nilai === null ? "belum diisi" : h?.sumber}
                     </td>
                     <td className="py-2.5 pr-3">
-                      {nilai === null ? (
+                      {usulan !== undefined ? (
+                        <Pill variant="waspada">usulan sensor {usulan}</Pill>
+                      ) : nilai === null ? (
                         <Pill>menunggu</Pill>
                       ) : ok ? (
                         <Pill variant="aman">sesuai</Pill>
@@ -520,9 +522,18 @@ function JurnalDetail() {
                         <span className="text-xs text-muted-foreground">
                           Isi manual dari alat uji
                         </span>
+                      ) : usulan !== undefined ? (
+                        <span className="inline-flex gap-2">
+                          <GhostButton onClick={() => konfirmasiUsulan(t.id, t.sensor)}>
+                            <Check className="size-3.5" /> Konfirmasi
+                          </GhostButton>
+                          <GhostButton onClick={() => tolakUsulan(t.id)}>
+                            <X className="size-3.5" />
+                          </GhostButton>
+                        </span>
                       ) : (
-                        <GhostButton onClick={() => isiDariSensor(t.id, t.sensor)}>
-                          <Radio className="size-3.5" /> Ambil sensor
+                        <GhostButton onClick={() => usulkanDariSensor(t.id, t.sensor)}>
+                          <Radio className="size-3.5" /> Usulkan dari sensor
                         </GhostButton>
                       )}
                     </td>
@@ -534,9 +545,13 @@ function JurnalDetail() {
         </div>
       </Card>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+      <div className="mt-5">
         <Card>
           <CardTitle title="Target dibanding hasil" sub="Pembacaan parameter batch ini" />
+          <BandProvenance
+            lapis="manusia"
+            tambahan="Hanya menampilkan nilai yang sudah dikonfirmasi."
+          />
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={perbandingan}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
@@ -556,64 +571,19 @@ function JurnalDetail() {
             </BarChart>
           </ResponsiveContainer>
         </Card>
-        <Card>
-          <CardTitle
-            title="Prediksi kestabilan"
-            sub="Proyeksi 28 hari pada tiga kondisi penyimpanan"
-          />
-          <ResponsiveContainer width="100%" height={230}>
-            <LineChart data={stabilitas}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="hari" tick={{ fontSize: 11 }} />
-              <YAxis domain={[40, 100]} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line
-                type="monotone"
-                dataKey="suhu4"
-                name="4 C"
-                stroke="var(--chart-2)"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="suhuRuang"
-                name="Suhu ruang"
-                stroke="var(--chart-1)"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="suhu45"
-                name="45 C"
-                stroke="var(--chart-5)"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
       </div>
 
-      <FormulaScreeningCard
-        screening={f2Screening}
-        loading={f2Loading}
-        error={f2Error}
-        missingF3={missingF3}
-      />
-      {f3Error && (
-        <p className="mt-2 text-xs font-medium text-danger">
-          Forecast F3 belum tersedia: {f3Error}
-        </p>
-      )}
+      <PanelCheckpoint proyek={proyek} batch={batch} peneliti={nama} />
+
+      <PanelSentinel proyek={proyek} batch={batch} peneliti={nama} />
+
+      <FormulaScreeningCard screening={f2Screening} loading={f2Loading} error={f2Error} />
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <GhostButton onClick={periksaFormulaDanRisiko}>
           {f2Loading ? "Memeriksa formula…" : "Periksa formula dan risiko"}
         </GhostButton>
         <span className="text-xs text-muted-foreground">
-          Screening F2 lewat gateway model. Prediksi F3 menyusul setelah datanya lengkap.
+          Screening F2 lewat gateway model. Keluaran F3 memakai panel Stability Sentinel.
         </span>
       </div>
 
