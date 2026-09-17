@@ -285,8 +285,10 @@ src/routes/doc.$id.tsx                   (ubah, HANYA blok voice log)
 2. **Bahasa.** Nama fungsi dan komentar mengikuti gaya yang sudah ada, yaitu Bahasa Indonesia untuk domain dan komentar penjelas. Komentar hanya ditulis bila menjelaskan alasan, bukan mengulang isi kode.
 3. **Tanpa em dash** pada teks yang tampil di UI.
 4. **Tanpa emoji** kecuali diminta.
-5. **Test.** Setiap adapter baru membawa test unit. Jalankan `bun run test` sebelum menyatakan selesai.
-6. **Lint.** Jalankan `bun run lint` dan pastikan bersih untuk berkas yang disentuh.
+5. **Test.** Setiap adapter baru membawa test unit. Jalankan `npx vitest run` sebelum menyatakan selesai.
+6. **Lint.** Jalankan `npx eslint` pada berkas yang disentuh dan pastikan bersih.
+
+> **Catatan lingkungan.** Repository memakai `bun.lock`, tetapi `bun` belum terpasang di semua mesin. Bila `bun` tidak tersedia, pasang dependency dengan `npm install --no-package-lock` supaya `package-lock.json` tidak ikut terbentuk, lalu pakai `npx`. `bun.lock` tidak boleh disunting tangan.
 
 ---
 
@@ -338,7 +340,7 @@ Digabung berurutan, bukan bersamaan, supaya konflik muncul satu per satu dan mud
 3. feat/f5-voicelog     →  master     konflik yang mungkin: blok import dan JSX doc.$id.tsx
 ```
 
-Setelah setiap penggabungan: jalankan `bun run test`, `bun run lint`, dan `bun run build`. Jangan menggabungkan jalur berikutnya sebelum yang sebelumnya hijau.
+Setelah setiap penggabungan: jalankan test, lint, dan build. Jangan menggabungkan jalur berikutnya sebelum yang sebelumnya hijau.
 
 Setelah ketiganya masuk, jalankan uji ujung ke ujung berikut dengan gateway hidup:
 
