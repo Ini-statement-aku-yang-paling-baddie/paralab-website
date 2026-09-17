@@ -426,7 +426,13 @@ function DokumenEditor() {
         }}
       />
 
-      {copilot && <DocCopilot proyek={proyek} batch={batch} onTutup={() => setCopilot(false)} />}
+      {copilot && (
+        <DocCopilot
+          judul={proyek.judul}
+          batchNomor={batch.nomor}
+          onTutup={() => setCopilot(false)}
+        />
+      )}
     </div>
   );
 }
