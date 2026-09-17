@@ -1,9 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { AlertTriangle, CircleCheck, Waves } from "lucide-react";
 import { AppShell } from "@/components/paralab/AppShell";
-import { Card, CardTitle, Pill, Stat } from "@/components/paralab/ui";
+import { Card, CardTitle, Pill, Stat, StatStrip } from "@/components/paralab/ui";
 import { SENSORS } from "@/lib/paralab/data";
 import { useSensors } from "@/hooks/use-sensors";
 
@@ -11,9 +19,16 @@ export const Route = createFileRoute("/iot")({
   head: () => ({
     meta: [
       { title: "Monitoring IoT Laboratorium | paralab.ai" },
-      { name: "description", content: "Pantau 22 kanal sensor laboratorium secara real time: suhu, kelembapan, pH, viskositas, droplet, gas, dan utilitas." },
+      {
+        name: "description",
+        content:
+          "Pantau 22 kanal sensor laboratorium secara real time: suhu, kelembapan, pH, viskositas, droplet, gas, dan utilitas.",
+      },
       { property: "og:title", content: "Monitoring IoT Laboratorium | paralab.ai" },
-      { property: "og:description", content: "Data sensor laboratorium real time yang langsung menjadi parameter penelitian." },
+      {
+        property: "og:description",
+        content: "Data sensor laboratorium real time yang langsung menjadi parameter penelitian.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -21,7 +36,12 @@ export const Route = createFileRoute("/iot")({
   component: IotPage,
 });
 
-const GRUP = ["Lingkungan Lab", "Reaktor & Proses", "Kualitas Sampel", "Utilitas & Keselamatan"] as const;
+const GRUP = [
+  "Lingkungan Lab",
+  "Reaktor & Proses",
+  "Kualitas Sampel",
+  "Utilitas & Keselamatan",
+] as const;
 
 function IotPage() {
   const { readings, riwayat } = useSensors(45);
@@ -32,13 +52,32 @@ function IotPage() {
   const alarm = readings.filter((r) => r.status !== "aman");
 
   return (
-    <AppShell judul="Monitoring Laboratorium" deskripsi="Pembacaan sensor diperbarui otomatis setiap dua detik dan menjadi sumber data parameter penelitian.">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Kanal sensor" value={String(SENSORS.length)} hint="Empat kelompok pemantauan" />
-        <Stat label="Status aman" value={String(readings.filter((r) => r.status === "aman").length)} hint="Berada di dalam jendela kerja" />
-        <Stat label="Perlu perhatian" value={String(readings.filter((r) => r.status === "waspada").length)} hint="Mendekati ambang batas" />
-        <Stat label="Di luar batas" value={String(readings.filter((r) => r.status === "bahaya").length)} hint="Butuh tindakan operator" />
-      </div>
+    <AppShell
+      judul="Monitoring Laboratorium"
+      deskripsi="Pembacaan sensor diperbarui otomatis setiap dua detik dan menjadi sumber data parameter penelitian."
+    >
+      <StatStrip>
+        <Stat
+          label="Kanal sensor"
+          value={String(SENSORS.length)}
+          hint="Empat kelompok pemantauan"
+        />
+        <Stat
+          label="Status aman"
+          value={String(readings.filter((r) => r.status === "aman").length)}
+          hint="Berada di dalam jendela kerja"
+        />
+        <Stat
+          label="Perlu perhatian"
+          value={String(readings.filter((r) => r.status === "waspada").length)}
+          hint="Mendekati ambang batas"
+        />
+        <Stat
+          label="Di luar batas"
+          value={String(readings.filter((r) => r.status === "bahaya").length)}
+          hint="Butuh tindakan operator"
+        />
+      </StatStrip>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -71,7 +110,14 @@ function IotPage() {
               <XAxis dataKey="waktu" tick={{ fontSize: 10 }} minTickGap={24} />
               <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Area type="monotone" dataKey="nilai" stroke="var(--chart-1)" strokeWidth={2.5} fill="url(#grad)" isAnimationActive={false} />
+              <Area
+                type="monotone"
+                dataKey="nilai"
+                stroke="var(--chart-1)"
+                strokeWidth={2.5}
+                fill="url(#grad)"
+                isAnimationActive={false}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </Card>
@@ -87,9 +133,16 @@ function IotPage() {
               {alarm.map((a) => {
                 const d = SENSORS.find((s) => s.id === a.id)!;
                 return (
-                  <li key={a.id} className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5">
+                  <li
+                    key={a.id}
+                    className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5"
+                  >
                     <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      <AlertTriangle className={a.status === "bahaya" ? "size-4 text-danger" : "size-4 text-warning"} />
+                      <AlertTriangle
+                        className={
+                          a.status === "bahaya" ? "size-4 text-danger" : "size-4 text-warning"
+                        }
+                      />
                       {d.label}
                     </span>
                     <Pill variant={a.status === "bahaya" ? "bahaya" : "waspada"}>
@@ -124,19 +177,29 @@ function IotPage() {
                     <span
                       className={
                         "mt-1 size-2 shrink-0 rounded-full " +
-                        (r.status === "aman" ? "bg-success" : r.status === "waspada" ? "bg-warning" : "bg-danger")
+                        (r.status === "aman"
+                          ? "bg-success"
+                          : r.status === "waspada"
+                            ? "bg-warning"
+                            : "bg-danger")
                       }
                     />
                   </div>
                   <p className="mt-2 text-xl font-bold tracking-tight text-foreground">
                     {r.nilai}
-                    <span className="ml-1 text-xs font-semibold text-muted-foreground">{s.unit}</span>
+                    <span className="ml-1 text-xs font-semibold text-muted-foreground">
+                      {s.unit}
+                    </span>
                   </p>
                   <div className="mt-3 h-1.5 w-full rounded-full bg-secondary">
                     <div
                       className={
                         "h-full rounded-full transition-all " +
-                        (r.status === "aman" ? "bg-success" : r.status === "waspada" ? "bg-warning" : "bg-danger")
+                        (r.status === "aman"
+                          ? "bg-success"
+                          : r.status === "waspada"
+                            ? "bg-warning"
+                            : "bg-danger")
                       }
                       style={{ width: persen + "%" }}
                     />

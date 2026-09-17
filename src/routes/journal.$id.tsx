@@ -1,9 +1,39 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, ArrowUpRight, CheckCircle2, Download, FileText, FlaskConical, Radio, Send, Sparkles } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Download,
+  FileText,
+  FlaskConical,
+  Radio,
+  Send,
+  Sparkles,
+} from "lucide-react";
 import { AppShell } from "@/components/paralab/AppShell";
-import { Card, CardTitle, Pill, PrimaryButton, GhostButton, Stat, inputClass } from "@/components/paralab/ui";
+import {
+  Card,
+  CardTitle,
+  Pill,
+  PrimaryButton,
+  GhostButton,
+  Stat,
+  StatStrip,
+  inputClass,
+} from "@/components/paralab/ui";
 import { SENSORS, formatRupiah, hitungHpp } from "@/lib/paralab/data";
 import { PARAM_LIBRARY } from "@/lib/paralab/catalog";
 import { deteksiClash, evaluasiBatch, kurvaStabilitas, ringkasKepatuhan } from "@/lib/paralab/ai";
@@ -16,13 +46,22 @@ import { unduhScaleUpBrief } from "@/lib/paralab/scaleup";
 type Search = { batch?: number | undefined };
 
 export const Route = createFileRoute("/journal/$id")({
-  validateSearch: (s: Record<string, unknown>): Search => ({ batch: s["batch"] ? Number(s["batch"]) : undefined }),
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    batch: s["batch"] ? Number(s["batch"]) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Jurnal Praktikum Penelitian | paralab.ai" },
-      { name: "description", content: "Isi jurnal praktikum, ambil nilai dari sensor laboratorium, tutup batch, dan dapatkan evaluasi AI untuk batch berikutnya." },
+      {
+        name: "description",
+        content:
+          "Isi jurnal praktikum, ambil nilai dari sensor laboratorium, tutup batch, dan dapatkan evaluasi AI untuk batch berikutnya.",
+      },
       { property: "og:title", content: "Jurnal Praktikum Penelitian | paralab.ai" },
-      { property: "og:description", content: "Electronic lab notebook dengan evaluasi batch otomatis." },
+      {
+        property: "og:description",
+        content: "Electronic lab notebook dengan evaluasi batch otomatis.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -40,7 +79,10 @@ function JurnalDetail() {
 
   if (!proyek) {
     return (
-      <AppShell judul="Jurnal tidak ditemukan" deskripsi="Penelitian yang Anda cari tidak tersedia pada perangkat ini.">
+      <AppShell
+        judul="Jurnal tidak ditemukan"
+        deskripsi="Penelitian yang Anda cari tidak tersedia pada perangkat ini."
+      >
         <Card>
           <Link to="/dashboard" className="text-sm font-semibold text-brand">
             Kembali ke dashboard
@@ -76,23 +118,46 @@ function JurnalDetail() {
     actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({
       ...b,
       status: b.status === "draft" ? "berjalan" : b.status,
-      hasil: b.hasil.map((h) => (h.paramId === paramId ? { ...h, nilai, sumber: "sensor", waktu: new Date().toISOString() } : h)),
+      hasil: b.hasil.map((h) =>
+        h.paramId === paramId
+          ? { ...h, nilai, sumber: "sensor", waktu: new Date().toISOString() }
+          : h,
+      ),
     }));
-    actions.catat(nama, proyek!.judul, "Pembacaan sensor", "Nilai " + nilai + " diambil langsung dari sensor untuk batch " + batch.nomor, sensorId);
+    actions.catat(
+      nama,
+      proyek!.judul,
+      "Pembacaan sensor",
+      "Nilai " + nilai + " diambil langsung dari sensor untuk batch " + batch.nomor,
+      sensorId,
+    );
   }
 
   function isiManual(paramId: string, nilai: number) {
     actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({
       ...b,
       status: b.status === "draft" ? "berjalan" : b.status,
-      hasil: b.hasil.map((h) => (h.paramId === paramId ? { ...h, nilai, sumber: "manual", waktu: new Date().toISOString() } : h)),
+      hasil: b.hasil.map((h) =>
+        h.paramId === paramId
+          ? { ...h, nilai, sumber: "manual", waktu: new Date().toISOString() }
+          : h,
+      ),
     }));
   }
 
   function selesaikanBatch() {
     const evaluasi = evaluasiBatch(batch, proyek!.targets, batch.feedback);
     actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({ ...b, status: "dievaluasi", evaluasi }));
-    actions.catat(nama, proyek!.judul, "Batch selesai", "RnD batch " + batch.nomor + " ditutup dengan skor kesesuaian " + evaluasi.skorKesesuaian + " persen");
+    actions.catat(
+      nama,
+      proyek!.judul,
+      "Batch selesai",
+      "RnD batch " +
+        batch.nomor +
+        " ditutup dengan skor kesesuaian " +
+        evaluasi.skorKesesuaian +
+        " persen",
+    );
   }
 
   function buatBatchBerikut() {
@@ -109,11 +174,20 @@ function JurnalDetail() {
         const ubah = ev.perubahanFormula.find((p) => p.bahan === b.name);
         return ubah ? { ...b, percent: ubah.ke } : b;
       }),
-      hasil: proyek!.targets.map((t) => ({ paramId: t.id, nilai: null, sumber: "sensor" as const })),
+      hasil: proyek!.targets.map((t) => ({
+        paramId: t.id,
+        nilai: null,
+        sumber: "sensor" as const,
+      })),
       observasi: "",
       feedback: "",
     });
-    actions.catat(nama, proyek!.judul, "Batch baru", "Rancangan evaluasi batch " + nomor + " dibuat dari rekomendasi AI");
+    actions.catat(
+      nama,
+      proyek!.judul,
+      "Batch baru",
+      "Rancangan evaluasi batch " + nomor + " dibuat dari rekomendasi AI",
+    );
     setAktif(nomor);
   }
 
@@ -126,11 +200,17 @@ function JurnalDetail() {
             key={b.nomor}
             onClick={() => {
               setAktif(b.nomor);
-              navigate({ to: "/journal/$id", params: { id: proyek.id }, search: { batch: b.nomor } });
+              navigate({
+                to: "/journal/$id",
+                params: { id: proyek.id },
+                search: { batch: b.nomor },
+              });
             }}
             className={
               "rounded-xl border px-3.5 py-2 text-sm font-semibold transition-colors " +
-              (b.nomor === batch.nomor ? "border-brand bg-brand-soft text-brand-ink" : "border-border bg-card text-muted-foreground hover:bg-secondary")
+              (b.nomor === batch.nomor
+                ? "border-brand bg-brand-soft text-brand-ink"
+                : "border-border bg-card text-muted-foreground hover:bg-secondary")
             }
           >
             Batch {b.nomor}
@@ -151,19 +231,28 @@ function JurnalDetail() {
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Parameter terisi" value={terisi + " dari " + proyek.targets.length} hint="Sumber utama pembacaan sensor" />
+      <StatStrip>
+        <Stat
+          label="Parameter terisi"
+          value={terisi + " dari " + proyek.targets.length}
+          hint="Sumber utama pembacaan sensor"
+        />
         <Stat label="Parameter lolos" value={String(lolos)} hint="Berada dalam rentang toleransi" />
         <Stat label="Perkiraan HPP" value={formatRupiah(hpp.total)} hint="Per kemasan 50 ml" />
         <Stat label="Status kepatuhan" value={kepatuhan.status} hint="Halal dan batas BPOM" />
-      </div>
+      </StatStrip>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-3">
         <Card className="xl:col-span-2">
-          <CardTitle title={"Jurnal praktikum batch " + batch.nomor} sub="Kerangka dibuat AI, pengujian tetap dilakukan peneliti." />
+          <CardTitle
+            title={"Jurnal praktikum batch " + batch.nomor}
+            sub="Kerangka dibuat AI, pengujian tetap dilakukan peneliti."
+          />
           <div className="space-y-4 text-sm">
             <section>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Tujuan penelitian</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Tujuan penelitian
+              </p>
               <ul className="mt-1.5 list-disc space-y-1 pl-5">
                 {batch.tujuan.map((t, i) => (
                   <li key={i}>{t}</li>
@@ -171,11 +260,15 @@ function JurnalDetail() {
               </ul>
             </section>
             <section>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Hipotesis</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Hipotesis
+              </p>
               <p className="mt-1.5">{batch.hipotesis}</p>
             </section>
             <section>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Prosedur kerja</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Prosedur kerja
+              </p>
               <ol className="mt-1.5 list-decimal space-y-1 pl-5">
                 {batch.prosedur.map((t, i) => (
                   <li key={i}>{t}</li>
@@ -183,12 +276,19 @@ function JurnalDetail() {
               </ol>
             </section>
             <section>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Observasi peneliti</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Observasi peneliti
+              </p>
               <textarea
                 className={inputClass + " mt-1.5 min-h-24"}
                 placeholder="Catat warna, aroma, tekstur, dan kejadian penting selama proses."
                 value={batch.observasi}
-                onChange={(e) => actions.simpanBatch(proyek.id, batch.nomor, (b) => ({ ...b, observasi: e.target.value }))}
+                onChange={(e) =>
+                  actions.simpanBatch(proyek.id, batch.nomor, (b) => ({
+                    ...b,
+                    observasi: e.target.value,
+                  }))
+                }
               />
             </section>
           </div>
@@ -196,16 +296,28 @@ function JurnalDetail() {
 
         <div className="space-y-5">
           <Card>
-            <CardTitle title="Formula batch" sub={batch.bahan.length + " bahan aktif dan pendukung"} />
+            <CardTitle
+              title="Formula batch"
+              sub={batch.bahan.length + " bahan aktif dan pendukung"}
+            />
             <ul className="space-y-2 text-sm">
               {batch.bahan.map((b) => (
-                <li key={b.id} className="flex items-center justify-between gap-2 border-b border-border/70 pb-2">
+                <li
+                  key={b.id}
+                  className="flex items-center justify-between gap-2 border-b border-border/70 pb-2"
+                >
                   <span>
                     <span className="font-semibold text-foreground">{b.name}</span>
                     <span className="block text-xs text-muted-foreground">{b.fungsi}</span>
                   </span>
                   <span className="flex items-center gap-2">
-                    <Pill variant={b.halal === "halal" ? "aman" : b.halal === "syubhat" ? "waspada" : "bahaya"}>{b.halal}</Pill>
+                    <Pill
+                      variant={
+                        b.halal === "halal" ? "aman" : b.halal === "syubhat" ? "waspada" : "bahaya"
+                      }
+                    >
+                      {b.halal}
+                    </Pill>
                     <span className="w-14 text-right font-semibold">{b.percent}%</span>
                   </span>
                 </li>
@@ -224,7 +336,11 @@ function JurnalDetail() {
                 {clashes.map((c, i) => (
                   <li key={i} className="rounded-xl border border-border p-2.5">
                     <p className="flex items-center gap-1.5 text-sm font-semibold">
-                      <AlertTriangle className={c.tingkat === "tinggi" ? "size-4 text-danger" : "size-4 text-warning"} />
+                      <AlertTriangle
+                        className={
+                          c.tingkat === "tinggi" ? "size-4 text-danger" : "size-4 text-warning"
+                        }
+                      />
                       {c.a} dan {c.b}
                     </p>
                     <p className="mt-1 text-muted-foreground">{c.alasan}</p>
@@ -237,7 +353,10 @@ function JurnalDetail() {
       </div>
 
       <Card className="mt-5">
-        <CardTitle title="Tabel hasil uji" sub="Setiap parameter diambil dari kanal sensor laboratorium atau diisi manual bila alat luring." />
+        <CardTitle
+          title="Tabel hasil uji"
+          sub="Setiap parameter diambil dari kanal sensor laboratorium atau diisi manual bila alat luring."
+        />
         <div className="overflow-x-auto">
           <table className="table-clear w-full text-sm">
             <thead>
@@ -260,11 +379,13 @@ function JurnalDetail() {
                     <td className="py-2.5 pr-3">
                       <p className="font-semibold text-foreground">{t.label}</p>
                       <p className="text-xs text-muted-foreground">
-                        {SENSORS.find((s) => s.id === t.sensor)?.label ?? PARAM_LIBRARY.find((x) => x.id === t.id)?.metode ?? "Uji laboratorium"}
+                        {SENSORS.find((s) => s.id === t.sensor)?.label ??
+                          PARAM_LIBRARY.find((x) => x.id === t.id)?.metode ??
+                          "Uji laboratorium"}
                       </p>
                     </td>
                     <td className="py-2.5 pr-3 text-muted-foreground">
-                       {t.target} ± {t.toleransi} {t.unit}
+                      {t.target} ± {t.toleransi} {t.unit}
                     </td>
                     <td className="py-2.5 pr-3">
                       <input
@@ -276,13 +397,23 @@ function JurnalDetail() {
                         onChange={(e) => isiManual(t.id, Number(e.target.value))}
                       />
                     </td>
-                    <td className="py-2.5 pr-3 text-xs text-muted-foreground">{nilai === null ? "belum diisi" : h?.sumber}</td>
+                    <td className="py-2.5 pr-3 text-xs text-muted-foreground">
+                      {nilai === null ? "belum diisi" : h?.sumber}
+                    </td>
                     <td className="py-2.5 pr-3">
-                      {nilai === null ? <Pill>menunggu</Pill> : ok ? <Pill variant="aman">sesuai</Pill> : <Pill variant="waspada">di luar toleransi</Pill>}
+                      {nilai === null ? (
+                        <Pill>menunggu</Pill>
+                      ) : ok ? (
+                        <Pill variant="aman">sesuai</Pill>
+                      ) : (
+                        <Pill variant="waspada">di luar toleransi</Pill>
+                      )}
                     </td>
                     <td className="py-2.5 text-right">
                       {t.sensor === "manual" ? (
-                        <span className="text-xs text-muted-foreground">Isi manual dari alat uji</span>
+                        <span className="text-xs text-muted-foreground">
+                          Isi manual dari alat uji
+                        </span>
                       ) : (
                         <GhostButton onClick={() => isiDariSensor(t.id, t.sensor)}>
                           <Radio className="size-3.5" /> Ambil sensor
@@ -303,7 +434,14 @@ function JurnalDetail() {
           <ResponsiveContainer width="100%" height={230}>
             <BarChart data={perbandingan}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="nama" tick={{ fontSize: 10 }} interval={0} angle={-12} height={50} textAnchor="end" />
+              <XAxis
+                dataKey="nama"
+                tick={{ fontSize: 10 }}
+                interval={0}
+                angle={-12}
+                height={50}
+                textAnchor="end"
+              />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -313,7 +451,10 @@ function JurnalDetail() {
           </ResponsiveContainer>
         </Card>
         <Card>
-          <CardTitle title="Prediksi kestabilan" sub="Proyeksi 28 hari pada tiga kondisi penyimpanan" />
+          <CardTitle
+            title="Prediksi kestabilan"
+            sub="Proyeksi 28 hari pada tiga kondisi penyimpanan"
+          />
           <ResponsiveContainer width="100%" height={230}>
             <LineChart data={stabilitas}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
@@ -321,9 +462,30 @@ function JurnalDetail() {
               <YAxis domain={[40, 100]} tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="suhu4" name="4 C" stroke="var(--chart-2)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="suhuRuang" name="Suhu ruang" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="suhu45" name="45 C" stroke="var(--chart-5)" strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="suhu4"
+                name="4 C"
+                stroke="var(--chart-2)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="suhuRuang"
+                name="Suhu ruang"
+                stroke="var(--chart-1)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="suhu45"
+                name="45 C"
+                stroke="var(--chart-5)"
+                strokeWidth={2}
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </Card>
@@ -335,19 +497,30 @@ function JurnalDetail() {
         <CardTitle
           title={"Penutupan RnD batch " + batch.nomor}
           sub="Tambahkan masukan peneliti agar analisis AI lebih tajam."
-          right={<Pill variant={batch.status === "dievaluasi" ? "aman" : "brand"}>{batch.status}</Pill>}
+          right={
+            <Pill variant={batch.status === "dievaluasi" ? "aman" : "brand"}>{batch.status}</Pill>
+          }
         />
         <textarea
           className={inputClass + " min-h-20"}
           placeholder="Masukan peneliti, misalnya tekstur terlalu berat atau aroma kurang stabil setelah dua minggu."
           value={batch.feedback}
-          onChange={(e) => actions.simpanBatch(proyek.id, batch.nomor, (b) => ({ ...b, feedback: e.target.value }))}
+          onChange={(e) =>
+            actions.simpanBatch(proyek.id, batch.nomor, (b) => ({ ...b, feedback: e.target.value }))
+          }
         />
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <PrimaryButton onClick={selesaikanBatch} disabled={!lengkap || batch.status === "dievaluasi"}>
+          <PrimaryButton
+            onClick={selesaikanBatch}
+            disabled={!lengkap || batch.status === "dievaluasi"}
+          >
             <FlaskConical className="size-4" /> RnD batch {batch.nomor} selesai
           </PrimaryButton>
-          {!lengkap && <span className="text-xs text-muted-foreground">Lengkapi seluruh parameter hasil uji sebelum menutup batch.</span>}
+          {!lengkap && (
+            <span className="text-xs text-muted-foreground">
+              Lengkapi seluruh parameter hasil uji sebelum menutup batch.
+            </span>
+          )}
         </div>
       </Card>
 
@@ -355,7 +528,9 @@ function JurnalDetail() {
         <Card className="mt-5">
           <CardTitle
             title="Evaluasi AI dan rancangan batch berikutnya"
-            sub={"Skor kesesuaian " + batch.evaluasi.skorKesesuaian + " persen terhadap standar output"}
+            sub={
+              "Skor kesesuaian " + batch.evaluasi.skorKesesuaian + " persen terhadap standar output"
+            }
             right={
               <span className="flex items-center gap-1.5 text-xs font-semibold text-brand">
                 <Sparkles className="size-4" /> Dianalisis dari jurnal dan masukan peneliti
@@ -365,7 +540,9 @@ function JurnalDetail() {
           <p className="text-sm text-foreground">{batch.evaluasi.ringkasan}</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Kekurangan</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Kekurangan
+              </p>
               <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm">
                 {batch.evaluasi.kekurangan.map((k, i) => (
                   <li key={i}>{k}</li>
@@ -373,7 +550,9 @@ function JurnalDetail() {
               </ul>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Rekomendasi</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Rekomendasi
+              </p>
               <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm">
                 {batch.evaluasi.rekomendasi.map((k, i) => (
                   <li key={i}>{k}</li>
@@ -383,30 +562,40 @@ function JurnalDetail() {
           </div>
           {batch.evaluasi.perubahanFormula.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Usulan perubahan formula</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Usulan perubahan formula
+              </p>
               <ul className="mt-1.5 space-y-1.5 text-sm">
                 {batch.evaluasi.perubahanFormula.map((p, i) => (
                   <li key={i} className="rounded-xl border border-border px-3 py-2">
-                    <span className="font-semibold">{p.bahan}</span> dari {p.dari}% menjadi {p.ke}%. {p.alasan}
+                    <span className="font-semibold">{p.bahan}</span> dari {p.dari}% menjadi {p.ke}%.{" "}
+                    {p.alasan}
                   </li>
                 ))}
               </ul>
             </div>
           )}
           <div className="mt-4 rounded-xl bg-brand-soft p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-brand-ink">Rancangan penelitian batch {batch.nomor + 1}</p>
-            <p className="mt-1.5 text-sm text-foreground">{batch.evaluasi.rancanganBerikutnya.hipotesis}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-brand-ink">
+              Rancangan penelitian batch {batch.nomor + 1}
+            </p>
+            <p className="mt-1.5 text-sm text-foreground">
+              {batch.evaluasi.rancanganBerikutnya.hipotesis}
+            </p>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground">
               {batch.evaluasi.rancanganBerikutnya.tujuan.map((t, i) => (
                 <li key={i}>{t}</li>
               ))}
             </ul>
-            <p className="mt-2 text-xs text-muted-foreground">Fokus uji: {batch.evaluasi.rancanganBerikutnya.fokusUji.join(", ")}</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Fokus uji: {batch.evaluasi.rancanganBerikutnya.fokusUji.join(", ")}
+            </p>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             {batch.evaluasi.skorKesesuaian < 70 && proyek.batches.length === batch.nomor && (
               <PrimaryButton onClick={buatBatchBerikut}>
-                <ArrowUpRight className="size-4" /> Belum sesuai standar, buat jurnal batch {batch.nomor + 1}
+                <ArrowUpRight className="size-4" /> Belum sesuai standar, buat jurnal batch{" "}
+                {batch.nomor + 1}
               </PrimaryButton>
             )}
             {batch.evaluasi.skorKesesuaian >= 70 && (
@@ -434,7 +623,6 @@ function JurnalDetail() {
           </div>
         </Card>
       )}
-
     </AppShell>
   );
 }

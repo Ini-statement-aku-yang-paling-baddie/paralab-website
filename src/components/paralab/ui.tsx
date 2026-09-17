@@ -4,7 +4,15 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
   return <section className={"surface-card p-5 " + className}>{children}</section>;
 }
 
-export function CardTitle({ title, sub, right }: { title: string; sub?: string; right?: ReactNode }) {
+export function CardTitle({
+  title,
+  sub,
+  right,
+}: {
+  title: string;
+  sub?: string;
+  right?: ReactNode;
+}) {
   return (
     <div className="mb-4 flex items-start justify-between gap-3">
       <div>
@@ -24,25 +32,61 @@ const tone: Record<string, string> = {
   bahaya: "bg-danger-soft text-danger",
 };
 
-export function Pill({ children, variant = "netral" }: { children: ReactNode; variant?: keyof typeof tone }) {
+export function Pill({
+  children,
+  variant = "netral",
+}: {
+  children: ReactNode;
+  variant?: keyof typeof tone;
+}) {
   return (
-    <span className={"inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold " + tone[variant]}>
+    <span
+      className={
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold " +
+        tone[variant]
+      }
+    >
       {children}
     </span>
   );
 }
 
-export function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+export function StatStrip({ children }: { children: ReactNode }) {
   return (
-    <div className="surface-card p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1.5 text-2xl font-bold tracking-tight text-foreground">{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    <div
+      className={
+        "grid border border-border bg-card sm:grid-cols-2 xl:grid-cols-4 " +
+        "[&>*:nth-child(n+2)]:border-t " +
+        "sm:[&>*:nth-child(-n+2)]:border-t-0 sm:[&>*:nth-child(2n)]:border-l " +
+        "xl:[&>*:nth-child(n+2)]:border-l xl:[&>*:nth-child(n+2)]:border-t-0"
+      }
+    >
+      {children}
     </div>
   );
 }
 
-export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+export function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="px-5 py-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="mt-1 flex items-baseline gap-2">
+        <strong className="font-display text-2xl font-semibold text-foreground">{value}</strong>
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      </div>
+    </div>
+  );
+}
+
+export function Field({
+  label,
+  children,
+  hint,
+}: {
+  label: string;
+  children: ReactNode;
+  hint?: string;
+}) {
   return (
     <label className="block">
       <span className="text-sm font-semibold text-foreground">{label}</span>
