@@ -1,10 +1,33 @@
 import { useMemo, useRef, useState } from "react";
-import { Send, X } from "lucide-react";
+import { FileSearch, Send, ShieldCheck, X } from "lucide-react";
 import { formatRupiah, hitungHpp, type Batch, type Project } from "@/lib/paralab/data";
 import { PARAM_LIBRARY } from "@/lib/paralab/catalog";
 import { deteksiClash, prediksiParameter, ringkasKepatuhan } from "@/lib/paralab/ai";
+import { postJson } from "@/lib/paralab/api";
+export type F1EvidenceCard = {
+  source_id: string;
+  hybrid_score?: number;
+  outcome?: string;
+  failure_mode?: string;
+  journal_title?: string;
+};
 
-type Pesan = { peran: "ai" | "user"; teks: string };
+export type F1QueryResponse = {
+  query: string;
+  evidence_status: string;
+  evidence: F1EvidenceCard[];
+  answer: { summary: string; limitations: string } | null;
+  requires_human_review?: boolean;
+  limitations?: string[];
+};
+
+type Pesan = {
+  peran: "ai" | "user";
+  teks?: string;
+  hasil?: F1QueryResponse;
+  /** True bila jawaban berasal dari rule lokal karena gateway model tidak tersedia. */
+  lokal?: boolean;
+};
 
 const SARAN = [
   "Ringkas jurnal ini",
@@ -160,14 +183,31 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
   );
   const [pesan, setPesan] = useState<Pesan[]>(awal);
   const [teks, setTeks] = useState("");
+  const [memuat, setMemuat] = useState(false);
   const akhir = useRef<HTMLDivElement>(null);
 
-  function kirim(isi: string) {
+  async function kirim(isi: string) {
     const bersih = isi.trim();
-    if (bersih.length === 0) return;
-    setPesan((p) => [...p, { peran: "user", teks: bersih }, { peran: "ai", teks: jawab(proyek, batch, bersih) }]);
+    if (bersih.length === 0 || memuat) return;
+
+    setPesan((p) => [...p, { peran: "user", teks: bersih }]);
     setTeks("");
-    window.setTimeout(() => akhir.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    setMemuat(true);
+
+    try {
+      const hasil = await postJson<F1QueryResponse>("/v1/f1/query", { query: bersih });
+      setPesan((p) => [...p, { peran: "ai", hasil }]);
+    } catch {
+      // Fallback rule lokal: hanya saat gateway tidak menjawab, dan selalu
+      // ditandai supaya tidak dikira keluaran evidence F1.
+      setPesan((p) => [
+        ...p,
+        { peran: "ai", teks: jawab(proyek, batch, bersih), lokal: true },
+      ]);
+    } finally {
+      setMemuat(false);
+      window.setTimeout(() => akhir.current?.scrollIntoView?.({ behavior: "smooth" }), 50);
+    }
   }
 
   return (
@@ -185,23 +225,34 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {pesan.map((m, i) => (
           <div key={i} className={m.peran === "user" ? "flex justify-end" : ""}>
-            <p
-              className={
-                m.peran === "user"
-                  ? "max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm text-primary-foreground"
-                  : "max-w-[92%] text-sm leading-6 text-foreground"
-              }
-            >
-              {m.teks}
-            </p>
+            {m.peran === "user" && (
+              <p className="max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm text-primary-foreground">
+                {m.teks}
+              </p>
+            )}
+
+            {m.peran === "ai" && m.hasil && <HasilF1 hasil={m.hasil} />}
+
+            {m.peran === "ai" && !m.hasil && m.teks && (
+              <div className="max-w-[92%] space-y-1.5">
+                {m.lokal && (
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-warning">
+                    <ShieldCheck className="size-3.5 shrink-0" />
+                    Jawaban rule lokal — gateway model tidak tersedia
+                  </p>
+                )}
+                <p className="text-sm leading-6 text-foreground">{m.teks}</p>
+              </div>
+            )}
           </div>
         ))}
+        {memuat && <p className="text-xs text-muted-foreground">Mencari evidence…</p>}
         <div ref={akhir} />
       </div>
 
       <div className="flex flex-wrap gap-1.5 border-t border-border px-4 py-2">
         {SARAN.map((s) => (
-          <button key={s} onClick={() => kirim(s)} className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
+          <button key={s} onClick={() => void kirim(s)} className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
             {s}
           </button>
         ))}
@@ -210,7 +261,7 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          kirim(teks);
+          void kirim(teks);
         }}
         className="flex items-center gap-2 border-t border-border px-4 py-3"
       >
@@ -225,5 +276,50 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
         </button>
       </form>
     </aside>
+  );
+}
+
+function HasilF1({ hasil }: { hasil: F1QueryResponse }) {
+  if (!hasil.answer) {
+    return (
+      <div className="max-w-[92%] space-y-1.5">
+        {(hasil.limitations ?? ["Evidence tidak cukup untuk menjawab pertanyaan ini."]).map(
+          (limitation) => (
+            <p key={limitation} className="text-sm leading-6 text-muted-foreground">
+              {limitation}
+            </p>
+          ),
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-[92%] space-y-2.5">
+      <p className="text-sm leading-6 text-foreground">{hasil.answer.summary}</p>
+
+      {hasil.evidence.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <FileSearch className="size-3.5" /> Sumber evidence
+          </p>
+          {hasil.evidence.map((kartu) => (
+            <div key={kartu.source_id} className="rounded-xl border border-border px-3 py-2 text-xs">
+              <p className="font-mono font-semibold text-foreground">{kartu.source_id}</p>
+              {(kartu.outcome ?? kartu.failure_mode) && (
+                <p className="mt-0.5 text-muted-foreground">
+                  {[kartu.outcome, kartu.failure_mode].filter(Boolean).join(" · ")}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+        <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+        {hasil.answer.limitations}
+      </p>
+    </div>
   );
 }

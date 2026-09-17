@@ -25,6 +25,14 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Environment (jangan commit kredensial / base URL produksi)
+.env
+.env.*
+!.env.example
+
+# Hermes local planning artifacts
+.hermes/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
