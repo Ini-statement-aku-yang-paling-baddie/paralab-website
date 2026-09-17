@@ -16,6 +16,35 @@ export type F2Request = {
   ph: number | null;
 };
 
+export type F2RuleFired = {
+  rule_id: string;
+  rule_version: string;
+  severity: string;
+  source_id: string;
+  rationale: string;
+  requires_human_review: boolean;
+};
+
+export type F2IngredientResult = {
+  input: string;
+  ingredient_id?: string;
+  inci_name?: string;
+  status: string;
+  rules_fired: F2RuleFired[];
+  requires_human_review: boolean;
+};
+
+export type F2Screening = {
+  screened_at: string;
+  rule_version: string;
+  overall_status: string;
+  disclaimer: string;
+  results: F2IngredientResult[];
+  derived_features: Record<string, unknown>;
+  model_coverage?: { status: string; reason: string };
+  requires_human_signoff: boolean;
+};
+
 export type F3ProcessInput = {
   heating_temp_c?: number;
   homogenization_rpm?: number;

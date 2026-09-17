@@ -35,6 +35,7 @@ import {
   inputClass,
 } from "@/components/paralab/ui";
 import { SENSORS, formatRupiah, hitungHpp } from "@/lib/paralab/data";
+import type { Batch, Project } from "@/lib/paralab/data";
 import { PARAM_LIBRARY } from "@/lib/paralab/catalog";
 import { deteksiClash, evaluasiBatch, kurvaStabilitas, ringkasKepatuhan } from "@/lib/paralab/ai";
 import { actions, useAppState, useProject } from "@/lib/paralab/store";
@@ -42,9 +43,28 @@ import { bacaSatuSensor } from "@/hooks/use-sensors";
 import { PanelPemantauan } from "@/components/paralab/PanelPemantauan";
 import { UjiSampelStabilitas } from "@/components/paralab/UjiSampelStabilitas";
 import { NextValidationCard } from "@/components/paralab/NextValidationCard";
+import { FormulaScreeningCard } from "@/components/paralab/FormulaScreeningCard";
 import { ModelApiError, postJson } from "@/lib/paralab/api";
 import { toF4Request, type F4Recommendation } from "@/lib/paralab/f4-adapter";
+import {
+  missingF3Inputs,
+  toF2Request,
+  toF3Request,
+  type F2Screening,
+  type F3Inputs,
+} from "@/lib/paralab/model-adapters";
 import { unduhScaleUpBrief } from "@/lib/paralab/scaleup";
+
+/**
+ * Menyusun input F3 dari state jurnal. Field yang belum dikumpulkan UI sengaja
+ * dibiarkan kosong supaya `missingF3Inputs` melaporkannya, bukan dikarang.
+ */
+function f3InputsFromBatch(proyek: Project, batch: Batch): F3Inputs {
+  return {
+    trialId: `${proyek.id}-batch-${batch.nomor}`,
+    formula: batch.bahan.map((item) => ({ bahan: item.name, pct: item.percent })),
+  };
+}
 
 /**
  * Payload F3 contoh untuk demo F4. Sengaja statis: UI belum mengumpulkan
@@ -94,6 +114,11 @@ function JurnalDetail() {
   const [f4Recommendation, setF4Recommendation] = useState<F4Recommendation | null>(null);
   const [f4Loading, setF4Loading] = useState(false);
   const [f4Error, setF4Error] = useState<string | null>(null);
+  const [f2Screening, setF2Screening] = useState<F2Screening | null>(null);
+  const [f2Loading, setF2Loading] = useState(false);
+  const [f2Error, setF2Error] = useState<string | null>(null);
+  const [f3Error, setF3Error] = useState<string | null>(null);
+  const [missingF3, setMissingF3] = useState<string[]>([]);
 
   if (!proyek) {
     return (
@@ -161,6 +186,49 @@ function JurnalDetail() {
           : h,
       ),
     }));
+  }
+
+  async function periksaFormulaDanRisiko() {
+    if (f2Loading) return;
+    setF2Loading(true);
+    setF2Error(null);
+    setF3Error(null);
+
+    try {
+      const screening = await postJson<F2Screening>("/v1/f2/health-check", toF2Request(batch));
+      setF2Screening(screening);
+    } catch (cause) {
+      setF2Screening(null);
+      setF2Error(
+        cause instanceof ModelApiError ? cause.message : "Gateway model tidak dapat dihubungi.",
+      );
+    }
+
+    const inputs = f3InputsFromBatch(proyek!, batch);
+    const missing = missingF3Inputs(inputs);
+    setMissingF3(missing);
+    if (missing.length > 0) {
+      setF2Loading(false);
+      return;
+    }
+
+    try {
+      const forecast = await postJson<Record<string, unknown>>(
+        "/v1/f3/forecasts",
+        toF3Request(inputs),
+      );
+      const recommendation = await postJson<F4Recommendation>(
+        "/v1/f4/next-validation",
+        toF4Request(forecast, null),
+      );
+      setF4Recommendation(recommendation);
+    } catch (cause) {
+      setF3Error(
+        cause instanceof ModelApiError ? cause.message : "Forecast F3 tidak dapat dijalankan.",
+      );
+    } finally {
+      setF2Loading(false);
+    }
   }
 
   async function muatLangkahValidasi() {
@@ -527,6 +595,26 @@ function JurnalDetail() {
             </LineChart>
           </ResponsiveContainer>
         </Card>
+      </div>
+
+      <FormulaScreeningCard
+        screening={f2Screening}
+        loading={f2Loading}
+        error={f2Error}
+        missingF3={missingF3}
+      />
+      {f3Error && (
+        <p className="mt-2 text-xs font-medium text-danger">
+          Forecast F3 belum tersedia: {f3Error}
+        </p>
+      )}
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <GhostButton onClick={periksaFormulaDanRisiko}>
+          {f2Loading ? "Memeriksa formula…" : "Periksa formula dan risiko"}
+        </GhostButton>
+        <span className="text-xs text-muted-foreground">
+          Screening F2 lewat gateway model. Prediksi F3 menyusul setelah datanya lengkap.
+        </span>
       </div>
 
       <NextValidationCard recommendation={f4Recommendation} loading={f4Loading} error={f4Error} />
