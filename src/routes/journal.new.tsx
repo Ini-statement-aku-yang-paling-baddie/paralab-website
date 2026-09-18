@@ -57,6 +57,7 @@ import {
   paramUntukKategori,
   alasanRelevansi,
   formulaDariProyek,
+  normalisasiFormula,
   buatJurnalKosong,
   cariJurnalMirip,
   deteksiClash,
@@ -164,7 +165,7 @@ function JurnalBaruPage() {
   function salinFormula(sumber: Project) {
     const formula = formulaDariProyek(sumber);
     if (formula.length === 0) return;
-    setBahan(formula);
+    setBahan(normalisasiFormula(formula));
     setTargets(sumber.targets.map((t) => ({ ...t })));
     setBrief((b) => ({ ...b, kategori: sumber.kategori }));
     setLangkah(1);

@@ -121,7 +121,7 @@ function ambil(id: string): Ingredient | null {
   return b ? { ...b } : null;
 }
 
-function normalisasi(list: Ingredient[]): Ingredient[] {
+export function normalisasiFormula(list: Ingredient[]): Ingredient[] {
   const air = list.find((b) => b.id === "aqua");
   const lain = list.filter((b) => b.id !== "aqua");
   const totalLain = lain.reduce((t, b) => t + b.percent, 0);
@@ -136,7 +136,7 @@ export function susunFormula(brief: Brief): Ingredient[] {
     for (const id of KLAIM_BAHAN[klaim] ?? []) if (!ids.includes(id)) ids.push(id);
   }
   const list = ids.map(ambil).filter((b): b is Ingredient => b !== null);
-  return normalisasi(list);
+  return normalisasiFormula(list);
 }
 
 export type Clash = {
