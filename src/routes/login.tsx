@@ -10,9 +10,17 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Masuk Peneliti | paralab.ai" },
-      { name: "description", content: "Masuk ke ruang kerja riset formulasi paralab.ai untuk melanjutkan jurnal praktikum dan memantau laboratorium." },
+      {
+        name: "description",
+        content:
+          "Masuk ke ruang kerja riset formulasi paralab.ai untuk melanjutkan jurnal praktikum dan memantau laboratorium.",
+      },
       { property: "og:title", content: "Masuk Peneliti | paralab.ai" },
-      { property: "og:description", content: "Akses dashboard riset, monitoring sensor laboratorium, dan jurnal praktikum elektronik." },
+      {
+        property: "og:description",
+        content:
+          "Akses dashboard riset, monitoring sensor laboratorium, dan jurnal praktikum elektronik.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -34,7 +42,8 @@ function LoginPage() {
             Satu ruang kerja untuk formula, sensor, dan jurnal praktikum.
           </h2>
           <p className="mt-3 max-w-md text-sm opacity-90">
-            Setiap parameter penelitian terhubung langsung ke sensor laboratorium, sehingga hasil uji tercatat objektif dari batch pertama sampai serah terima ke divisi terkait.
+            Setiap parameter penelitian terhubung langsung ke sensor laboratorium, sehingga hasil
+            uji tercatat objektif dari batch pertama sampai serah terima ke divisi terkait.
           </p>
         </div>
         <p className="text-xs opacity-75">Prototipe riset internal untuk tim R&amp;D Vinara</p>
@@ -45,8 +54,12 @@ function LoginPage() {
           <div className="lg:hidden">
             <Logo />
           </div>
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">Masuk sebagai peneliti</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Pilih identitas peneliti untuk membuka ruang kerja riset.</p>
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground">
+            Masuk sebagai peneliti
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pilih identitas peneliti untuk membuka ruang kerja riset.
+          </p>
 
           <form
             className="mt-7 space-y-4"
@@ -66,8 +79,17 @@ function LoginPage() {
               </select>
             </Field>
             <Field label="Peran">
-              <select className={inputClass} value={peran} onChange={(e) => setPeran(e.target.value)}>
-                {["RnD Formulator", "Team Lead RnD", "Analis Laboratorium", "Regulatory Specialist"].map((p) => (
+              <select
+                className={inputClass}
+                value={peran}
+                onChange={(e) => setPeran(e.target.value)}
+              >
+                {[
+                  "RnD Formulator",
+                  "Team Lead RnD",
+                  "Analis Laboratorium",
+                  "Regulatory Specialist",
+                ].map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>

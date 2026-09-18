@@ -3,13 +3,33 @@ import type { Ingredient } from "@/lib/paralab/data";
 import { Molekul2D } from "@/components/paralab/Molekul2D";
 import { kebutuhanBahan, lotBahan, ringkasStok } from "@/lib/paralab/warehouse";
 
-export function StokPill({ bahanId, persen, onClick }: { bahanId: string; persen: number; onClick: () => void }) {
+export function StokPill({
+  bahanId,
+  persen,
+  onClick,
+}: {
+  bahanId: string;
+  persen: number;
+  onClick: () => void;
+}) {
   const s = ringkasStok(bahanId);
   if (!s) return null;
   const cukup = s.total * 1000 >= kebutuhanBahan(persen);
-  const nada = !cukup || s.status === "Karantina" ? "bg-danger-soft text-danger" : s.status === "Tersedia" ? "bg-success-soft text-success" : "bg-warning-soft text-warning";
+  const nada =
+    !cukup || s.status === "Karantina"
+      ? "bg-danger-soft text-danger"
+      : s.status === "Tersedia"
+        ? "bg-success-soft text-success"
+        : "bg-warning-soft text-warning";
   return (
-    <button type="button" onClick={onClick} className={"mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold " + nada}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold " +
+        nada
+      }
+    >
       <Boxes className="size-3" /> Gudang {s.total} {s.satuan} · rak {s.rakUtama}
     </button>
   );
@@ -20,7 +40,10 @@ export function DialogStok({ bahan, onTutup }: { bahan: Ingredient; onTutup: () 
   const butuh = kebutuhanBahan(bahan.percent);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/40 p-4 backdrop-blur-sm" onClick={onTutup}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/40 p-4 backdrop-blur-sm"
+      onClick={onTutup}
+    >
       <div className="surface-card my-8 w-full max-w-4xl p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -29,7 +52,10 @@ export function DialogStok({ bahan, onTutup }: { bahan: Ingredient; onTutup: () 
               {bahan.inci} · {bahan.golongan} · grade {bahan.grade}
             </p>
           </div>
-          <button onClick={onTutup} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary">
+          <button
+            onClick={onTutup}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary"
+          >
             <X className="size-5" />
           </button>
         </div>
@@ -51,7 +77,8 @@ export function DialogStok({ bahan, onTutup }: { bahan: Ingredient; onTutup: () 
 
           <div>
             <p className="text-sm text-foreground">
-              Kebutuhan batch laboratorium 500 gram pada kadar {bahan.percent} persen adalah <span className="font-bold">{butuh} gram</span>.
+              Kebutuhan batch laboratorium 500 gram pada kadar {bahan.percent} persen adalah{" "}
+              <span className="font-bold">{butuh} gram</span>.
             </p>
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -94,7 +121,8 @@ export function DialogStok({ bahan, onTutup }: { bahan: Ingredient; onTutup: () 
               </table>
             </div>
             <p className="mt-3 rounded-xl bg-secondary p-3 text-xs text-muted-foreground">
-              Kondisi penyimpanan gudang {lots[0]?.suhuSimpan ?? bahan.penyimpanan}. Gunakan lot dengan kedaluwarsa terdekat lebih dahulu.
+              Kondisi penyimpanan gudang {lots[0]?.suhuSimpan ?? bahan.penyimpanan}. Gunakan lot
+              dengan kedaluwarsa terdekat lebih dahulu.
             </p>
           </div>
         </div>

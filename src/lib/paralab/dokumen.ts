@@ -1,4 +1,11 @@
-import { formatRupiah, hitungHpp, lengkapiBahan, type Batch, type Ingredient, type Project } from "./data";
+import {
+  formatRupiah,
+  hitungHpp,
+  lengkapiBahan,
+  type Batch,
+  type Ingredient,
+  type Project,
+} from "./data";
 import { PARAM_LIBRARY } from "./catalog";
 import { deteksiClash, ringkasKepatuhan } from "./ai";
 import { labelStandar, standarTerpilih } from "./standar";
@@ -11,7 +18,9 @@ function li(items: string[]) {
 function cek(rows: [string, string][]) {
   return (
     "<table><thead><tr><th>Pengecekan</th><th>Metode dan acuan</th><th>Hasil</th><th>Lolos</th><th>Catatan alat dan tanggal</th></tr></thead><tbody>" +
-    rows.map(([a, b]) => "<tr><td>" + a + "</td><td>" + b + "</td><td></td><td></td><td></td></tr>").join("") +
+    rows
+      .map(([a, b]) => "<tr><td>" + a + "</td><td>" + b + "</td><td></td><td></td><td></td></tr>")
+      .join("") +
     "</tbody></table>"
   );
 }
@@ -34,8 +43,13 @@ const NAMA_FASE: Record<string, string> = {
 export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
   const batch: Batch = { ...batchAsli, bahan: batchAsli.bahan.map(lengkapiBahan) };
   const hpp = hitungHpp(batch.bahan);
-  const tanggal = new Date(batch.dibuat).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
-  const kodeBatch = "PL-" + proyek.id.replace("prj-", "").toUpperCase().slice(0, 8) + "-B" + batch.nomor;
+  const tanggal = new Date(batch.dibuat).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+  const kodeBatch =
+    "PL-" + proyek.id.replace("prj-", "").toUpperCase().slice(0, 8) + "-B" + batch.nomor;
   const clash = deteksiClash(batch.bahan);
   const patuh = ringkasKepatuhan(batch.bahan);
   const pilihan = proyek.standar ?? "nasional";
@@ -164,27 +178,70 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
     clash.length === 0
       ? "<tr><td colspan='4'>Tidak ditemukan interaksi kritis antar bahan pada formula ini</td></tr>"
       : clash
-          .map((c) => "<tr><td>" + c.a + "</td><td>" + c.b + "</td><td>" + c.tingkat + "</td><td>" + c.alasan + "</td></tr>")
+          .map(
+            (c) =>
+              "<tr><td>" +
+              c.a +
+              "</td><td>" +
+              c.b +
+              "</td><td>" +
+              c.tingkat +
+              "</td><td>" +
+              c.alasan +
+              "</td></tr>",
+          )
           .join("");
 
   return [
-    "<div class='doc-brand'><img src='" + logoDark + "' alt='paralab.ai, Electronic Lab Notebook Vinara R&amp;D'></div>",
-    "<p class='doc-meta'><strong>Hari / Tanggal Praktikum:</strong> " + tanggal + "<br><strong>Peneliti:</strong> " + proyek.peneliti + "<br><strong>Nomor Dokumen:</strong> " + kodeBatch + "<br><strong>Status:</strong> " + batch.status + "</p>",
+    "<div class='doc-brand'><img src='" +
+      logoDark +
+      "' alt='paralab.ai, Electronic Lab Notebook Vinara R&amp;D'></div>",
+    "<p class='doc-meta'><strong>Hari / Tanggal Praktikum:</strong> " +
+      tanggal +
+      "<br><strong>Peneliti:</strong> " +
+      proyek.peneliti +
+      "<br><strong>Nomor Dokumen:</strong> " +
+      kodeBatch +
+      "<br><strong>Status:</strong> " +
+      batch.status +
+      "</p>",
     "<p class='doc-module'>MODUL R&amp;D FORMULASI KOSMETIK</p>",
     "<h1>" + proyek.judul + "</h1>",
-    "<p class='doc-subtitle'>Batch " + batch.nomor + " &middot; " + proyek.kategori + " &middot; Skala laboratorium 500 gram</p>",
+    "<p class='doc-subtitle'>Batch " +
+      batch.nomor +
+      " &middot; " +
+      proyek.kategori +
+      " &middot; Skala laboratorium 500 gram</p>",
     "<p class='doc-disclaimer'><strong>DATA SIMULASI.</strong> Dokumen demonstrasi ini tidak memuat formula, hasil uji, personel, atau data internal nyata Vinara maupun mereknya. Semua keputusan pengembangan wajib diverifikasi melalui metode tervalidasi, spesifikasi terkini, kajian keselamatan, dan persetujuan fungsi berwenang.</p>",
 
     "<h2>I. Identitas Penelitian dan Kendali Dokumen</h2>",
     "<table><tbody>" +
-      "<tr><th>Nomor batch</th><td>" + kodeBatch + "</td><th>Skala</th><td>Skala laboratorium 500 gram</td></tr>" +
-      "<tr><th>Kategori produk</th><td>" + proyek.kategori + "</td><th>Bentuk sediaan</th><td>Sesuai rancangan kategori</td></tr>" +
-      "<tr><th>Peneliti utama</th><td>" + proyek.peneliti + "</td><th>Tim</th><td>" + proyek.tim + "</td></tr>" +
-      "<tr><th>Tanggal pembuatan</th><td>" + tanggal + "</td><th>Status batch</th><td>" + batch.status + "</td></tr>" +
-      "<tr><th>Perkiraan HPP</th><td>" + formatRupiah(hpp.total) + " per 50 ml</td><th>Jumlah bahan</th><td>" + batch.bahan.length + " bahan</td></tr>" +
+      "<tr><th>Nomor batch</th><td>" +
+      kodeBatch +
+      "</td><th>Skala</th><td>Skala laboratorium 500 gram</td></tr>" +
+      "<tr><th>Kategori produk</th><td>" +
+      proyek.kategori +
+      "</td><th>Bentuk sediaan</th><td>Sesuai rancangan kategori</td></tr>" +
+      "<tr><th>Peneliti utama</th><td>" +
+      proyek.peneliti +
+      "</td><th>Tim</th><td>" +
+      proyek.tim +
+      "</td></tr>" +
+      "<tr><th>Tanggal pembuatan</th><td>" +
+      tanggal +
+      "</td><th>Status batch</th><td>" +
+      batch.status +
+      "</td></tr>" +
+      "<tr><th>Perkiraan HPP</th><td>" +
+      formatRupiah(hpp.total) +
+      " per 50 ml</td><th>Jumlah bahan</th><td>" +
+      batch.bahan.length +
+      " bahan</td></tr>" +
       "</tbody></table>",
 
-    "<h2>II. Latar Belakang dan Teori Dasar</h2><p>" + proyek.brief + "</p><p>Dasar ilmiah wajib ditinjau terhadap data pemasok, pustaka primer, persyaratan BPOM yang berlaku, dan profil keamanan setiap bahan. Klaim produk belum dapat disimpulkan hanya dari hasil batch laboratorium.</p>",
+    "<h2>II. Latar Belakang dan Teori Dasar</h2><p>" +
+      proyek.brief +
+      "</p><p>Dasar ilmiah wajib ditinjau terhadap data pemasok, pustaka primer, persyaratan BPOM yang berlaku, dan profil keamanan setiap bahan. Klaim produk belum dapat disimpulkan hanya dari hasil batch laboratorium.</p>",
 
     "<h2>III. Tujuan Percobaan</h2><ul>" + li(batch.tujuan) + "</ul>",
 
@@ -204,7 +261,9 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
       "</ul>",
 
     "<h2>VI. Formula dan Data Bahan</h2>",
-    "<p>Perkiraan harga pokok produksi batch ini " + formatRupiah(hpp.total) + " per kemasan 50 ml. Seluruh kadar dinyatakan dalam persen bobot per bobot.</p>",
+    "<p>Perkiraan harga pokok produksi batch ini " +
+      formatRupiah(hpp.total) +
+      " per kemasan 50 ml. Seluruh kadar dinyatakan dalam persen bobot per bobot.</p>",
     "<table><thead><tr><th>No</th><th>Bahan</th><th>Nama INCI</th><th>Nomor CAS</th><th>Rumus kimia</th><th>Bobot molekul</th><th>Fase</th><th>Kadar persen</th><th>Rentang lazim</th><th>Fungsi</th></tr></thead><tbody>" +
       barisBahan +
       "</tbody></table>",
@@ -215,12 +274,22 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
       "</tbody></table>",
 
     "<h2>VIII. Kajian Kompatibilitas Formula</h2>",
-    "<table><thead><tr><th>Bahan A</th><th>Bahan B</th><th>Tingkat risiko</th><th>Penjelasan dan mitigasi</th></tr></thead><tbody>" + barisClash + "</tbody></table>",
+    "<table><thead><tr><th>Bahan A</th><th>Bahan B</th><th>Tingkat risiko</th><th>Penjelasan dan mitigasi</th></tr></thead><tbody>" +
+      barisClash +
+      "</tbody></table>",
     "<p>Catatan pengaturan pH kerja: seluruh bahan aktif harus berada pada jendela pH yang saling beririsan. Bila tidak beririsan, pisahkan bahan ke fase berbeda atau gunakan bentuk derivat yang lebih stabil.</p>",
 
     "<h2>IX. Kajian Awal Regulasi dan Halal</h2>",
-    "<p>Skrining rule prototipe versi " + patuh.ruleVersion + " menghasilkan status: " + patuh.label + ". Status ini berasal dari rule engine internal dan <strong>bukan</strong> persetujuan BPOM, MUI, atau keamanan. Bahan berstatus perlu verifikasi: " + (patuh.syubhat.length === 0 ? "tidak ada" : patuh.syubhat.map((b) => b.name).join(", ")) + ".</p>",
-    "<table><thead><tr><th>Bahan</th><th>Status BPOM</th><th>Batas maksimal</th><th>Status halal</th><th>Catatan verifikasi</th></tr></thead><tbody>" + barisRegulasi + "</tbody></table>",
+    "<p>Skrining rule prototipe versi " +
+      patuh.ruleVersion +
+      " menghasilkan status: " +
+      patuh.label +
+      ". Status ini berasal dari rule engine internal dan <strong>bukan</strong> persetujuan BPOM, MUI, atau keamanan. Bahan berstatus perlu verifikasi: " +
+      (patuh.syubhat.length === 0 ? "tidak ada" : patuh.syubhat.map((b) => b.name).join(", ")) +
+      ".</p>",
+    "<table><thead><tr><th>Bahan</th><th>Status BPOM</th><th>Batas maksimal</th><th>Status halal</th><th>Catatan verifikasi</th></tr></thead><tbody>" +
+      barisRegulasi +
+      "</tbody></table>",
 
     "<h2>X. Kontrol Mutu Bahan Baku</h2>",
     "<table><thead><tr><th>Bahan</th><th>Grade</th><th>Spesifikasi kunci</th><th>Penyimpanan</th><th>Nomor lot</th><th>Tanggal kedaluwarsa</th></tr></thead><tbody>" +
@@ -242,7 +311,9 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
       "</tbody></table>",
 
     "<h2>XIII. Tabel Hasil Uji</h2>",
-    "<table><thead><tr><th>Parameter</th><th>Metode uji</th><th>Target</th><th>Hasil</th><th>Lolos</th><th>Catatan</th></tr></thead><tbody>" + barisHasil + "</tbody></table>",
+    "<table><thead><tr><th>Parameter</th><th>Metode uji</th><th>Target</th><th>Hasil</th><th>Lolos</th><th>Catatan</th></tr></thead><tbody>" +
+      barisHasil +
+      "</tbody></table>",
 
     "<h2>XIV. Daftar Pengecekan Mutu Batch</h2>",
     "<p>Daftar berikut wajib ditandai pada setiap batch. Isi kolom hasil dan keputusan lolos atau tidak lolos, sertakan nomor alat dan tanggal kalibrasi pada kolom catatan.</p>",
@@ -254,14 +325,20 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
       ["Bau", "Organoleptik panel internal"],
       ["pH", "pH meter terkalibrasi 25 C"],
       ["Viskositas titik tunggal", "Brookfield, catat spindle dan kecepatan"],
-      ["Reologi penuh kurva alir", "Rheogram lintas shear rate, tentukan pseudoplastik atau tiksotropik"],
+      [
+        "Reologi penuh kurva alir",
+        "Rheogram lintas shear rate, tentukan pseudoplastik atau tiksotropik",
+      ],
       ["Densitas atau berat jenis", "Piknometer 25 C"],
       ["Indeks bias", "Refraktometer, khusus sediaan bening seperti serum dan toner"],
     ]),
 
     "<h3>XIV.2 Karakterisasi Mikrostruktur</h3>",
     cek([
-      ["Distribusi ukuran droplet", "Laser diffraction atau DLS, catat D10 D50 D90 dan polidispersitas"],
+      [
+        "Distribusi ukuran droplet",
+        "Laser diffraction atau DLS, catat D10 D50 D90 dan polidispersitas",
+      ],
       ["Potensial zeta", "Zetasizer, khusus sistem nano dan vesikular"],
       ["Pengamatan mikroskopis", "Mikroskop optik struktur emulsi dan kristal"],
     ]),
@@ -270,13 +347,13 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
     cek([
       ["Siklus beku cair", "Tiga siklus, catat pemisahan dan perubahan viskositas"],
       ["Sentrifugasi", "3000 rpm 30 menit"],
-       ["Suhu tinggi bertahap", "Naik 5 °C per tahap sampai muncul tanda pemisahan"],
-       ["Penyimpanan multi suhu paralel", "45 °C, 4 °C, dan −10 °C secara bersamaan"],
+      ["Suhu tinggi bertahap", "Naik 5 °C per tahap sampai muncul tanda pemisahan"],
+      ["Penyimpanan multi suhu paralel", "45 °C, 4 °C, dan −10 °C secara bersamaan"],
     ]),
 
     "<h3>XIV.4 Stabilitas Dipercepat dan Jangka Panjang</h3>",
     cek([
-       ["Accelerated aging", "30, 37, 40, 45, atau 50 °C sesuai protokol"],
+      ["Accelerated aging", "30, 37, 40, 45, atau 50 °C sesuai protokol"],
       ["Real time storage", "6 sampai 12 bulan suhu ruang terkendali"],
       ["Fotostabilitas", "Paparan cahaya dan UV"],
       ["Uji oksidatif", "Bilangan peroksida dan anisidin untuk minyak alami dan aktif sensitif"],
@@ -291,7 +368,12 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
     ]),
 
     "<h3>XIV.6 Mikrobiologi</h3>",
-    cek([["Total plate count awal", "Skrining internal cepat sebelum uji tantang resmi ke laboratorium eksternal"]]),
+    cek([
+      [
+        "Total plate count awal",
+        "Skrining internal cepat sebelum uji tantang resmi ke laboratorium eksternal",
+      ],
+    ]),
 
     "<h3>XIV.7 Uji Fungsional Sesuai Kategori</h3>",
     cek([
@@ -336,14 +418,29 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
     "<h3>XV.1 Jadwal Dokumentasi Foto Sampel Droplet Setiap Tiga Hari</h3>",
     "<p>Selama masa pemantauan stabilitas, sampel difoto pada perbesaran 400 kali setiap tiga hari. Bandingkan ukuran droplet dengan hari nol dan catat tanda krim, koalesens, atau pemisahan fase.</p>",
     "<table><thead><tr><th>Titik pengamatan</th><th>Tanggal</th><th>Ukuran droplet D50 mikron</th><th>Tanda pemisahan</th><th>Nama berkas foto</th><th>Paraf</th></tr></thead><tbody>" +
-      [0, 3, 6, 9, 12, 15, 18, 21].map((h) => "<tr><td>Hari ke " + h + "</td><td></td><td></td><td></td><td></td><td></td></tr>").join("") +
+      [0, 3, 6, 9, 12, 15, 18, 21]
+        .map(
+          (h) => "<tr><td>Hari ke " + h + "</td><td></td><td></td><td></td><td></td><td></td></tr>",
+        )
+        .join("") +
       "</tbody></table>",
 
     "<h3>XV.2 Acuan Standar Pengujian yang Dipakai</h3>",
     "<p>Laporan ini disusun mengikuti " + labelStandar(pilihan).toLowerCase() + ".</p>",
     "<table><thead><tr><th>Kode standar</th><th>Nama</th><th>Lingkup</th><th>Cakupan pengujian</th><th>Kesesuaian</th></tr></thead><tbody>" +
       standarTerpilih(pilihan)
-        .map((s) => "<tr><td>" + s.kode + "</td><td>" + s.nama + "</td><td>" + s.lingkup + "</td><td>" + s.cakupan + "</td><td></td></tr>")
+        .map(
+          (s) =>
+            "<tr><td>" +
+            s.kode +
+            "</td><td>" +
+            s.nama +
+            "</td><td>" +
+            s.lingkup +
+            "</td><td>" +
+            s.cakupan +
+            "</td><td></td></tr>",
+        )
         .join("") +
       "</tbody></table>",
 
@@ -360,7 +457,8 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
     "<p>Catat jenis kemasan, bahan kontak, hasil uji kebocoran, perubahan bobot setelah 28 hari pada 45 C, dan tanda interaksi seperti perubahan warna kemasan atau penyerapan pengawet.</p>",
 
     "<h2>XVIII. Observasi Proses</h2><p>" +
-      (batch.observasi || "Tulis pengamatan warna, aroma, tekstur, perilaku emulsi saat pendinginan, dan kejadian penting selama proses.") +
+      (batch.observasi ||
+        "Tulis pengamatan warna, aroma, tekstur, perilaku emulsi saat pendinginan, dan kejadian penting selama proses.") +
       "</p>",
 
     "<h2>XIX. Perhitungan dan Pembahasan</h2><p>Hubungkan komposisi kimia, parameter proses, dan hasil uji. Cantumkan contoh perhitungan kadar aktif, koreksi assay bahan baku, neraca massa, susut proses, dan HPP. Jelaskan penyebab bila ada parameter di luar target, misalnya pengaruh beban elektrolit terhadap viskositas, pengaruh pH terhadap stabilitas aktif, atau pengaruh laju pendinginan terhadap ukuran droplet.</p>",
@@ -377,7 +475,9 @@ export function buatDokumenHtml(proyek: Project, batchAsli: Batch) {
       ]) +
       "</ul>",
 
-    "<h2>XXII. Tinjauan dan Pengesahan</h2><table><thead><tr><th>Peran</th><th>Nama</th><th>Keputusan</th><th>Tanda tangan dan tanggal</th></tr></thead><tbody><tr><td>Peneliti utama</td><td>" + proyek.peneliti + "</td><td>Disusun</td><td></td></tr><tr><td>Reviewer QA / Kepala Laboratorium</td><td></td><td>Setuju / Revisi / Tolak</td><td></td></tr><tr><td>Regulatory dan Halal</td><td></td><td>Setuju / Revisi / Tolak</td><td></td></tr><tr><td>Penanggung jawab scale-up</td><td></td><td>Setuju / Revisi / Tolak</td><td></td></tr></tbody></table>",
+    "<h2>XXII. Tinjauan dan Pengesahan</h2><table><thead><tr><th>Peran</th><th>Nama</th><th>Keputusan</th><th>Tanda tangan dan tanggal</th></tr></thead><tbody><tr><td>Peneliti utama</td><td>" +
+      proyek.peneliti +
+      "</td><td>Disusun</td><td></td></tr><tr><td>Reviewer QA / Kepala Laboratorium</td><td></td><td>Setuju / Revisi / Tolak</td><td></td></tr><tr><td>Regulatory dan Halal</td><td></td><td>Setuju / Revisi / Tolak</td><td></td></tr><tr><td>Penanggung jawab scale-up</td><td></td><td>Setuju / Revisi / Tolak</td><td></td></tr></tbody></table>",
   ].join("");
 }
 

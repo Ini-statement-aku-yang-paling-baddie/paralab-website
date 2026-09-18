@@ -59,9 +59,23 @@ function tanggal(offsetHari: number) {
 
 function zonaBahan(b: Ingredient) {
   const g = b.golongan.toLowerCase();
-  if (b.penyimpanan.toLowerCase().includes("dingin") || g.includes("aktif") || g.includes("vitamin") || g.includes("peptida")) return ZONA[1]!;
-  if (g.includes("emolien") || g.includes("minyak") || g.includes("ester") || g.includes("lemak")) return ZONA[2]!;
-  if (g.includes("polimer") || g.includes("gum") || g.includes("serbuk") || g.includes("mineral") || g.includes("filter")) return ZONA[3]!;
+  if (
+    b.penyimpanan.toLowerCase().includes("dingin") ||
+    g.includes("aktif") ||
+    g.includes("vitamin") ||
+    g.includes("peptida")
+  )
+    return ZONA[1]!;
+  if (g.includes("emolien") || g.includes("minyak") || g.includes("ester") || g.includes("lemak"))
+    return ZONA[2]!;
+  if (
+    g.includes("polimer") ||
+    g.includes("gum") ||
+    g.includes("serbuk") ||
+    g.includes("mineral") ||
+    g.includes("filter")
+  )
+    return ZONA[3]!;
   if (g.includes("pelarut") || g.includes("alkohol") || g.includes("parfum")) return ZONA[4]!;
   return ZONA[0]!;
 }

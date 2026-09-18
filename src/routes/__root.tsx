@@ -78,17 +78,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "paralab.ai | Platform R&D Kosmetik" },
-      { name: "description", content: "Ruang kerja penelitian formulasi kosmetik dengan jurnal elektronik, data sensor laboratorium, dan evaluasi batch." },
+      {
+        name: "description",
+        content:
+          "Ruang kerja penelitian formulasi kosmetik dengan jurnal elektronik, data sensor laboratorium, dan evaluasi batch.",
+      },
       { name: "author", content: "paralab.ai" },
       { property: "og:title", content: "paralab.ai | Platform R&D Kosmetik" },
-      { property: "og:description", content: "Ruang kerja penelitian formulasi kosmetik dengan jurnal elektronik dan data sensor laboratorium." },
+      {
+        property: "og:description",
+        content:
+          "Ruang kerja penelitian formulasi kosmetik dengan jurnal elektronik dan data sensor laboratorium.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,

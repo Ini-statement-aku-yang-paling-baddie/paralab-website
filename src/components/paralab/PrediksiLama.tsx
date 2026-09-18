@@ -1,5 +1,14 @@
 import { useMemo } from "react";
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { CalendarClock, FlaskConical } from "lucide-react";
 import { prediksiJangkaPanjang } from "@/lib/paralab/prediksi";
 import type { Ingredient } from "@/lib/paralab/data";
@@ -10,10 +19,26 @@ export function PrediksiLama({ bahan }: { bahan: Ingredient[] }) {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-4">
-        <Kotak label="Umur simpan prediksi" nilai={p.umurSimpanBulan + " bulan"} sub={"Kedaluwarsa sekitar " + p.tanggalKadaluarsa} />
-        <Kotak label="Masa pakai setelah dibuka" nilai={p.paoBulan + " bulan"} sub="Usulan penandaan PAO pada kemasan" />
-        <Kotak label="Energi aktivasi" nilai={p.energiAktivasi + " kJ/mol"} sub="Dasar perhitungan model Arrhenius" />
-        <Kotak label="Kadar aktif bulan ke 12" nilai={p.kurva[6]!.kadar25 + " persen"} sub="Penyimpanan suhu ruang 25 C" />
+        <Kotak
+          label="Umur simpan prediksi"
+          nilai={p.umurSimpanBulan + " bulan"}
+          sub={"Kedaluwarsa sekitar " + p.tanggalKadaluarsa}
+        />
+        <Kotak
+          label="Masa pakai setelah dibuka"
+          nilai={p.paoBulan + " bulan"}
+          sub="Usulan penandaan PAO pada kemasan"
+        />
+        <Kotak
+          label="Energi aktivasi"
+          nilai={p.energiAktivasi + " kJ/mol"}
+          sub="Dasar perhitungan model Arrhenius"
+        />
+        <Kotak
+          label="Kadar aktif bulan ke 12"
+          nilai={p.kurva[6]!.kadar25 + " persen"}
+          sub="Penyimpanan suhu ruang 25 C"
+        />
       </div>
 
       <div>
@@ -28,10 +53,38 @@ export function PrediksiLama({ bahan }: { bahan: Ingredient[] }) {
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip labelFormatter={(v) => "Bulan ke " + v} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="kadar25" name="Kadar aktif 25 C" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="kadar40" name="Kadar aktif 40 C" stroke="var(--chart-2)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="peroksida" name="Nilai peroksida meq/kg" stroke="var(--chart-3)" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="deltaE" name="Delta E warna" stroke="var(--chart-4)" strokeWidth={2} dot={false} />
+              <Line
+                type="monotone"
+                dataKey="kadar25"
+                name="Kadar aktif 25 C"
+                stroke="var(--chart-1)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="kadar40"
+                name="Kadar aktif 40 C"
+                stroke="var(--chart-2)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="peroksida"
+                name="Nilai peroksida meq/kg"
+                stroke="var(--chart-3)"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="deltaE"
+                name="Delta E warna"
+                stroke="var(--chart-4)"
+                strokeWidth={2}
+                dot={false}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -73,7 +126,10 @@ export function PrediksiLama({ bahan }: { bahan: Ingredient[] }) {
                 </div>
                 <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
                   <div
-                    className={"h-full rounded-full " + (r.skor >= 65 ? "bg-danger" : r.skor >= 40 ? "bg-warning" : "bg-success")}
+                    className={
+                      "h-full rounded-full " +
+                      (r.skor >= 65 ? "bg-danger" : r.skor >= 40 ? "bg-warning" : "bg-success")
+                    }
                     style={{ width: Math.max(4, r.skor) + "%" }}
                   />
                 </div>
