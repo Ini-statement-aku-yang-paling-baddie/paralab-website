@@ -6,12 +6,13 @@ import { AppShell } from "./AppShell";
 const mocks = vi.hoisted(() => ({
   hydrate: vi.fn(),
   state: { user: null as { nama: string; peran: string } | null },
+  pathname: "/dashboard",
 }));
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
   Navigate: () => <p>Dialihkan ke akses ruang kerja</p>,
-  useRouterState: () => "/dashboard",
+  useRouterState: () => mocks.pathname,
 }));
 
 vi.mock("@/lib/paralab/store", () => ({
@@ -24,6 +25,7 @@ afterEach(() => {
   cleanup();
   mocks.hydrate.mockReset();
   mocks.state.user = null;
+  mocks.pathname = "/dashboard";
 });
 
 describe("AppShell", () => {
@@ -32,6 +34,15 @@ describe("AppShell", () => {
 
     await waitFor(() => expect(screen.getByText(/dialihkan ke akses ruang kerja/i)).toBeTruthy());
     expect(screen.queryByText("Konten ruang kerja")).toBeNull();
+  });
+
+  it("membatasi tamu demo pada dashboard", async () => {
+    mocks.state.user = { nama: "Tamu Demo", peran: "Pengamat" };
+    mocks.pathname = "/journal/new";
+    render(<AppShell judul="Jurnal">Konten jurnal</AppShell>);
+
+    await waitFor(() => expect(screen.getByText(/dialihkan ke akses ruang kerja/i)).toBeTruthy());
+    expect(screen.queryByText("Konten jurnal")).toBeNull();
   });
 
   it("menampilkan ruang kerja setelah profil dipilih", async () => {

@@ -53,7 +53,8 @@ function capaian(p: Project, nomor: number) {
 }
 
 function DashboardPage() {
-  const { projects } = useAppState();
+  const { projects, user } = useAppState();
+  const tamuDemo = user?.peran === "Pengamat";
 
   const maksBatch = Math.max(1, ...projects.map((p) => p.batches.length));
   const dataTren = Array.from({ length: maksBatch }, (_, i) => {
@@ -81,13 +82,24 @@ function DashboardPage() {
       judul="Dashboard RnD"
       deskripsi="Kendali penelitian formulasi, aktivitas batch, dan kondisi laboratorium."
       aksi={
-        <Link to="/journal/new">
-          <PrimaryButton>
-            <NotebookPen className="size-4" /> Tambah Jurnal Baru
-          </PrimaryButton>
-        </Link>
+        tamuDemo ? undefined : (
+          <Link to="/journal/new">
+            <PrimaryButton>
+              <NotebookPen className="size-4" /> Tambah Jurnal Baru
+            </PrimaryButton>
+          </Link>
+        )
       }
     >
+      {tamuDemo && (
+        <div className="mb-4 border-l-2 border-brand bg-brand-soft/50 p-3 text-sm text-foreground">
+          <p className="font-semibold">Mode contoh, lihat saja</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Dashboard dapat ditinjau, tetapi jurnal, data penelitian, dan alat laboratorium tidak
+            tersedia untuk tamu.
+          </p>
+        </div>
+      )}
       <p className="mb-4 text-xs text-muted-foreground">
         Simulasi profesional untuk alur kerja laboratorium, bukan formula komersial atau data
         internal Vinara.

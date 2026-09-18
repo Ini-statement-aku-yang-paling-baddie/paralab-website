@@ -75,8 +75,8 @@ export function LoginPage() {
           </button>
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">Akses ruang kerja</h1>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Prototipe ini belum memakai autentikasi akun. Identitas di bawah hanya menyesuaikan
-            konteks kerja dan logbook pada perangkat ini.
+            Pilih profil kerja untuk prototipe ini. Kata sandi dummy dipakai hanya untuk memberi
+            pengalaman masuk yang realistis dan belum memverifikasi akun.
           </p>
 
           <section className="mt-7 rounded-xl border border-border bg-card p-5">
@@ -118,6 +118,9 @@ export function LoginPage() {
                     ),
                   )}
                 </select>
+              </Field>
+              <Field label="Kata sandi" hint="Dummy untuk prototipe, masukkan nilai apa pun.">
+                <input className={inputClass} type="password" defaultValue="paralab2026" />
               </Field>
               <PrimaryButton type="submit" className="w-full">
                 Lanjut sebagai peneliti <ArrowRight className="size-4" />

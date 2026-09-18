@@ -52,12 +52,19 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
     setSiap(true);
   }, []);
 
+  const tamuDemo = state.user?.peran === "Pengamat";
+  const navigasi = tamuDemo ? NAV.filter((item) => item.to === "/dashboard") : NAV;
+
   if (!siap) {
     return <div className="min-h-screen bg-background" aria-label="Memuat ruang kerja" />;
   }
 
   if (!state.user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (tamuDemo && pathname !== "/dashboard") {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
@@ -67,7 +74,7 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
           <Logo />
         </Link>
         <nav className="flex flex-col gap-1">
-          {NAV.map((item) => {
+          {navigasi.map((item) => {
             const aktif = pathname.startsWith(item.to);
             return (
               <Link
@@ -130,7 +137,7 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
             </div>
           </div>
           <nav className="mt-3 flex gap-1 overflow-x-auto lg:hidden">
-            {NAV.map((item) => (
+            {navigasi.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}

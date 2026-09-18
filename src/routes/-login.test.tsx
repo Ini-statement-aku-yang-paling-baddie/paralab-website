@@ -28,10 +28,10 @@ afterEach(() => {
 });
 
 describe("LoginPage", () => {
-  it("menjelaskan bahwa pemilihan profil bukan autentikasi akun", () => {
+  it("menjelaskan bahwa kata sandi masih dummy pada prototipe", () => {
     render(<LoginPage />);
-    expect(screen.getByText(/belum memakai autentikasi akun/i)).toBeTruthy();
-    expect(screen.queryByLabelText(/kata sandi/i)).toBeNull();
+    expect(screen.getByText(/kata sandi dummy/i)).toBeTruthy();
+    expect(screen.getByLabelText(/kata sandi/i)).toBeTruthy();
   });
 
   it("membuka dashboard contoh lewat mode demo yang eksplisit", () => {
