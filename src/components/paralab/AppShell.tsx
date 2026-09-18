@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Activity,
   BookOpen,
@@ -11,6 +11,7 @@ import {
   Send,
 } from "lucide-react";
 import { actions, hydrate, useAppState } from "@/lib/paralab/store";
+import { bolehAksesRuangKerja } from "@/lib/paralab/access";
 import markLight from "@/assets/paralab-mark-light.png";
 
 const NAV = [
@@ -59,11 +60,34 @@ export function AppShell({
   aksi?: ReactNode;
 }) {
   const state = useAppState();
+  const navigate = useNavigate();
+  const [siap, setSiap] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     hydrate();
+    setSiap(true);
   }, []);
+
+  const tamuDemo = state.user?.peran === "Pengamat";
+  const navigasi = NAV.filter((item) => bolehAksesRuangKerja(state.user?.peran, item.to));
+
+  if (!siap) {
+    return <div className="min-h-screen bg-background" aria-label="Memuat ruang kerja" />;
+  }
+
+  if (!state.user) {
+    return <Navigate to="/login" search={{ next: pathname }} replace />;
+  }
+
+  if (!bolehAksesRuangKerja(state.user.peran, pathname)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  function keluar() {
+    navigate({ to: "/" });
+    actions.logout();
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -72,7 +96,7 @@ export function AppShell({
           <Logo />
         </Link>
         <nav className="flex flex-col gap-1">
-          {NAV.map((item) => {
+          {navigasi.map((item) => {
             const aktif = pathname.startsWith(item.to);
             return (
               <Link
@@ -103,7 +127,7 @@ export function AppShell({
           </div>
           {state.user && (
             <button
-              onClick={() => actions.logout()}
+              onClick={keluar}
               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               <LogOut className="size-4" /> Keluar
@@ -125,14 +149,21 @@ export function AppShell({
               {aksi}
               <div className="flex items-center gap-2 rounded-md border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5">
                 <span className="flex size-7 items-center justify-center rounded-sm bg-primary-foreground/20 text-xs font-bold text-primary-foreground">
-                  {(state.user?.nama ?? "Tamu").slice(0, 1)}
+                  {state.user.nama.slice(0, 1)}
                 </span>
-                <span className="text-sm font-medium text-white">{state.user?.nama ?? "Tamu"}</span>
+                <span className="text-sm font-medium text-white">{state.user.nama}</span>
               </div>
+              <button
+                type="button"
+                onClick={keluar}
+                className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white"
+              >
+                <LogOut className="size-3.5" /> Keluar
+              </button>
             </div>
           </div>
           <nav className="mt-3 flex gap-1 overflow-x-auto lg:hidden">
-            {NAV.map((item) => (
+            {navigasi.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}

@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/paralab/AppShell";
 import { useSensors } from "@/hooks/use-sensors";
 import { BAHAN_LIBRARY, SENSORS } from "@/lib/paralab/data";
+import { actions } from "@/lib/paralab/store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -141,6 +142,25 @@ function PanelSensor() {
   );
 }
 
+function BukaMonitoringSebagaiTamu() {
+  const navigate = useNavigate();
+
+  function bukaMonitoring() {
+    actions.login("Tamu Demo", "Pengamat");
+    navigate({ to: "/iot" });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={bukaMonitoring}
+      className="text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+    >
+      Lihat monitoring lab
+    </button>
+  );
+}
+
 function Beranda() {
   return (
     <main className="min-h-screen bg-background">
@@ -148,12 +168,6 @@ function Beranda() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
           <Logo />
           <div className="flex items-center gap-5">
-            <Link
-              to="/iot"
-              className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
-            >
-              Monitoring lab
-            </Link>
             <Link
               to="/login"
               className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-brand"
@@ -190,12 +204,7 @@ function Beranda() {
               >
                 Mulai penelitian <ArrowRight className="size-4" />
               </Link>
-              <Link
-                to="/iot"
-                className="text-sm font-semibold text-foreground underline-offset-4 hover:underline"
-              >
-                Lihat monitoring lab
-              </Link>
+              <BukaMonitoringSebagaiTamu />
             </div>
             <dl className="mt-10 flex flex-wrap gap-x-9 gap-y-4 border-t border-border pt-5">
               {[
