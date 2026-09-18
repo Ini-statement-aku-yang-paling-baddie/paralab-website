@@ -16,7 +16,12 @@ import {
   YAxis,
 } from "recharts";
 import { Camera, FlaskRound, Sparkles } from "lucide-react";
-import { analisaPiksel, prediksiSifatBahan, type AnalisaCitra, type HasilPrediktor } from "@/lib/paralab/prediksi";
+import {
+  analisaPiksel,
+  prediksiSifatBahan,
+  type AnalisaCitra,
+  type HasilPrediktor,
+} from "@/lib/paralab/prediksi";
 import { GhostButton, PrimaryButton, inputClass } from "./ui";
 
 const CONTOH = [
@@ -63,11 +68,23 @@ export function PrediktorBahan() {
       <div className="grid gap-3 sm:grid-cols-[1fr_1.4fr_auto] sm:items-end">
         <label className="block">
           <span className="text-sm font-semibold text-foreground">Nama bahan baru</span>
-          <input className={inputClass + " mt-1.5"} value={nama} onChange={(e) => setNama(e.target.value)} placeholder="Contoh: ekstrak minyak atsiri nilam" />
+          <input
+            className={inputClass + " mt-1.5"}
+            value={nama}
+            onChange={(e) => setNama(e.target.value)}
+            placeholder="Contoh: ekstrak minyak atsiri nilam"
+          />
         </label>
         <label className="block">
-          <span className="text-sm font-semibold text-foreground">Struktur molekul format SMILES</span>
-          <input className={inputClass + " mt-1.5 font-mono text-xs"} value={smiles} onChange={(e) => setSmiles(e.target.value)} placeholder="CC(C)=CCCC(C)(C=C)c1ccc(O)cc1" />
+          <span className="text-sm font-semibold text-foreground">
+            Struktur molekul format SMILES
+          </span>
+          <input
+            className={inputClass + " mt-1.5 font-mono text-xs"}
+            value={smiles}
+            onChange={(e) => setSmiles(e.target.value)}
+            placeholder="CC(C)=CCCC(C)(C=C)c1ccc(O)cc1"
+          />
         </label>
         <label className="block">
           <span className="text-sm font-semibold text-foreground">Kemurnian</span>
@@ -108,21 +125,31 @@ export function PrediktorBahan() {
             {hasil.sifat.map((s) => (
               <div key={s.label} className="rounded-xl border border-border bg-card p-3">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {s.label}
+                  </p>
                   <span
                     className={
                       "rounded-full px-2 py-0.5 text-[10px] font-bold " +
-                      (s.tingkat === "bahaya" ? "bg-danger-soft text-danger" : s.tingkat === "waspada" ? "bg-warning-soft text-warning" : "bg-success-soft text-success")
+                      (s.tingkat === "bahaya"
+                        ? "bg-danger-soft text-danger"
+                        : s.tingkat === "waspada"
+                          ? "bg-warning-soft text-warning"
+                          : "bg-success-soft text-success")
                     }
                   >
                     {s.keyakinan} persen yakin
                   </span>
                 </div>
                 <p className="mt-1 text-xl font-bold tracking-tight text-foreground">
-                  {s.nilai} <span className="text-xs font-medium text-muted-foreground">{s.unit}</span>
+                  {s.nilai}{" "}
+                  <span className="text-xs font-medium text-muted-foreground">{s.unit}</span>
                 </p>
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                  <div className="h-full rounded-full bg-brand" style={{ width: Math.max(3, Math.min(100, s.skala)) + "%" }} />
+                  <div
+                    className="h-full rounded-full bg-brand"
+                    style={{ width: Math.max(3, Math.min(100, s.skala)) + "%" }}
+                  />
                 </div>
                 <p className="mt-1.5 text-xs text-muted-foreground">{s.catatan}</p>
               </div>
@@ -138,18 +165,32 @@ export function PrediktorBahan() {
                     <PolarGrid stroke="var(--border)" />
                     <PolarAngleAxis dataKey="sumbu" tick={{ fontSize: 10 }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 9 }} />
-                    <Radar dataKey="nilai" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.35} />
+                    <Radar
+                      dataKey="nilai"
+                      stroke="var(--chart-1)"
+                      fill="var(--chart-1)"
+                      fillOpacity={0.35}
+                    />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">Prediksi kelarutan pada pelarut kosmetik</p>
+              <p className="text-sm font-bold text-foreground">
+                Prediksi kelarutan pada pelarut kosmetik
+              </p>
               <div className="mt-2 h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={hasil.kelarutanKurva} margin={{ left: -16 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="pelarut" tick={{ fontSize: 9 }} interval={0} angle={-18} textAnchor="end" height={58} />
+                    <XAxis
+                      dataKey="pelarut"
+                      tick={{ fontSize: 9 }}
+                      interval={0}
+                      angle={-18}
+                      textAnchor="end"
+                      height={58}
+                    />
                     <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
                     <Tooltip formatter={(v: number) => v + " skor"} />
                     <Bar dataKey="kelarutan" fill="var(--chart-2)" radius={[6, 6, 0, 0]} />
@@ -160,10 +201,15 @@ export function PrediktorBahan() {
           </div>
 
           <div>
-            <p className="text-sm font-bold text-foreground">Bahan basis data dengan profil paling mirip</p>
+            <p className="text-sm font-bold text-foreground">
+              Bahan basis data dengan profil paling mirip
+            </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {hasil.miripDengan.map((m) => (
-                <span key={m.nama} className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">
+                <span
+                  key={m.nama}
+                  className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+                >
                   {m.nama} · {m.golongan} · {m.kemiripan} persen
                 </span>
               ))}
@@ -177,7 +223,9 @@ export function PrediktorBahan() {
           <Camera className="size-4 text-brand" /> Analisis citra sampel dan mikroskopi
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Unggah foto sampel atau citra mikroskop emulsi. Sistem membaca tekstur dan sebaran kecerahan citra untuk memperkirakan homogenitas, ukuran droplet, dan tanda awal pemisahan fase.
+          Unggah foto sampel atau citra mikroskop emulsi. Sistem membaca tekstur dan sebaran
+          kecerahan citra untuk memperkirakan homogenitas, ukuran droplet, dan tanda awal pemisahan
+          fase.
         </p>
 
         <input
@@ -208,7 +256,11 @@ export function PrediktorBahan() {
 
         {gambar && (
           <div className="mt-4 grid gap-4 lg:grid-cols-[220px_1fr]">
-            <img src={gambar} alt="Citra sampel formula yang diunggah untuk analisis mikrostruktur" className="h-52 w-full rounded-xl border border-border object-cover" />
+            <img
+              src={gambar}
+              alt="Citra sampel formula yang diunggah untuk analisis mikrostruktur"
+              className="h-52 w-full rounded-xl border border-border object-cover"
+            />
             {citra && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -219,21 +271,34 @@ export function PrediktorBahan() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Distribusi ukuran droplet prediksi</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Distribusi ukuran droplet prediksi
+                    </p>
                     <div className="mt-2 h-40">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={citra.distribusi} margin={{ left: -18 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                           <XAxis dataKey="ukuran" tick={{ fontSize: 9 }} />
                           <YAxis tick={{ fontSize: 9 }} />
-                          <Tooltip formatter={(v: number) => v + " persen volume"} labelFormatter={(v) => v + " mikron"} />
-                          <Area type="monotone" dataKey="volume" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.3} />
+                          <Tooltip
+                            formatter={(v: number) => v + " persen volume"}
+                            labelFormatter={(v) => v + " mikron"}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="volume"
+                            stroke="var(--chart-1)"
+                            fill="var(--chart-1)"
+                            fillOpacity={0.3}
+                          />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Histogram kecerahan citra</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Histogram kecerahan citra
+                    </p>
                     <div className="mt-2 h-40">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={citra.histogram} margin={{ left: -18 }}>

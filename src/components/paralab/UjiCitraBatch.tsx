@@ -35,7 +35,13 @@ type Entri = {
   citra: AnalisaCitra;
 };
 
-export function UjiCitraBatch({ nomor, onTemuan }: { nomor: number; onTemuan: (teks: string) => void }) {
+export function UjiCitraBatch({
+  nomor,
+  onTemuan,
+}: {
+  nomor: number;
+  onTemuan: (teks: string) => void;
+}) {
   const [jenis, setJenis] = useState<string>(JENIS_UJI_CITRA[0]);
   const [entri, setEntri] = useState<Entri[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -54,7 +60,10 @@ export function UjiCitraBatch({ nomor, onTemuan }: { nomor: number; onTemuan: (t
       ctx.drawImage(img, 0, 0, lebar, tinggi);
       const data = ctx.getImageData(0, 0, lebar, tinggi).data;
       const citra = analisaPiksel(data, lebar, tinggi);
-      setEntri((v) => [...v, { id: String(Date.now()) + file.name, jenis, gambar: url, nama: file.name, citra }]);
+      setEntri((v) => [
+        ...v,
+        { id: String(Date.now()) + file.name, jenis, gambar: url, nama: file.name, citra },
+      ]);
     };
     img.src = url;
   }
@@ -88,9 +97,9 @@ export function UjiCitraBatch({ nomor, onTemuan }: { nomor: number; onTemuan: (t
         <Camera className="size-4 text-brand" /> Pengujian berbasis citra batch ke-{nomor}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Unggah foto sampel, citra mikroskop, atau dokumentasi uji stabilitas. Sistem menghitung statistik
-        tekstur dan sebaran kecerahan citra, lalu <strong>mengusulkan</strong> temuan. Peneliti yang
-        memutuskan apakah temuan itu masuk ke umpan balik penutupan praktikum.
+        Unggah foto sampel, citra mikroskop, atau dokumentasi uji stabilitas. Sistem menghitung
+        statistik tekstur dan sebaran kecerahan citra, lalu <strong>mengusulkan</strong> temuan.
+        Peneliti yang memutuskan apakah temuan itu masuk ke umpan balik penutupan praktikum.
       </p>
 
       <div className="mt-3">
@@ -138,7 +147,11 @@ export function UjiCitraBatch({ nomor, onTemuan }: { nomor: number; onTemuan: (t
         {entri.map((e) => (
           <div key={e.id} className="rounded-xl border border-border bg-card p-3">
             <div className="flex items-start gap-3">
-              <img src={e.gambar} alt={"Citra uji " + e.jenis + " batch " + nomor} className="size-24 shrink-0 rounded-lg border border-border object-cover" />
+              <img
+                src={e.gambar}
+                alt={"Citra uji " + e.jenis + " batch " + nomor}
+                className="size-24 shrink-0 rounded-lg border border-border object-cover"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -164,21 +177,34 @@ export function UjiCitraBatch({ nomor, onTemuan }: { nomor: number; onTemuan: (t
 
             <div className="mt-3 grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Distribusi ukuran droplet prediksi</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Distribusi ukuran droplet prediksi
+                </p>
                 <div className="mt-2 h-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={e.citra.distribusi} margin={{ left: -18 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                       <XAxis dataKey="ukuran" tick={{ fontSize: 9 }} />
                       <YAxis tick={{ fontSize: 9 }} />
-                      <Tooltip formatter={(v: number) => v + " persen volume"} labelFormatter={(v) => v + " mikron"} />
-                      <Area type="monotone" dataKey="volume" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.3} />
+                      <Tooltip
+                        formatter={(v: number) => v + " persen volume"}
+                        labelFormatter={(v) => v + " mikron"}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="volume"
+                        stroke="var(--chart-1)"
+                        fill="var(--chart-1)"
+                        fillOpacity={0.3}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Histogram kecerahan citra</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Histogram kecerahan citra
+                </p>
                 <div className="mt-2 h-40">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={e.citra.histogram} margin={{ left: -18 }}>

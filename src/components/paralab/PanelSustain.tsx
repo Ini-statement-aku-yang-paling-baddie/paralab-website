@@ -7,7 +7,14 @@ import { formatRupiah, type Ingredient } from "@/lib/paralab/data";
 export function PanelSustain({ bahan }: { bahan: Ingredient[] }) {
   const s = useMemo(() => hitungSustain(bahan), [bahan]);
 
-  const warnaSkor = s.skor >= 80 ? "text-success" : s.skor >= 65 ? "text-brand" : s.skor >= 50 ? "text-warning" : "text-danger";
+  const warnaSkor =
+    s.skor >= 80
+      ? "text-success"
+      : s.skor >= 65
+        ? "text-brand"
+        : s.skor >= 50
+          ? "text-warning"
+          : "text-danger";
 
   return (
     <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
@@ -15,8 +22,12 @@ export function PanelSustain({ bahan }: { bahan: Ingredient[] }) {
         <p className="flex items-center gap-1.5 text-sm font-bold text-foreground">
           <Wallet className="size-4 text-brand" /> Estimasi biaya per unit
         </p>
-        <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">{formatRupiah(s.biayaPerUnit)}</p>
-        <p className="text-xs text-muted-foreground">Bahan {formatRupiah(s.biayaBahan)} per 50 ml, diperbarui setiap komposisi berubah.</p>
+        <p className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+          {formatRupiah(s.biayaPerUnit)}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Bahan {formatRupiah(s.biayaBahan)} per 50 ml, diperbarui setiap komposisi berubah.
+        </p>
       </div>
 
       <div className="border-t border-border pt-3">
@@ -25,7 +36,9 @@ export function PanelSustain({ bahan }: { bahan: Ingredient[] }) {
         </p>
         <div className="mt-1 flex items-baseline gap-2">
           <span className={"text-2xl font-bold tracking-tight " + warnaSkor}>{s.skor}</span>
-          <span className="text-xs font-semibold uppercase text-muted-foreground">{s.peringkat}</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">
+            {s.peringkat}
+          </span>
         </div>
         <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
           <div className="h-full rounded-full bg-success" style={{ width: s.skor + "%" }} />
@@ -53,12 +66,21 @@ export function PanelSustain({ bahan }: { bahan: Ingredient[] }) {
 
       {s.penyumbangCo2.length > 0 && (
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Penyumbang karbon terbesar</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Penyumbang karbon terbesar
+          </p>
           <div className="mt-2 h-32">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={s.penyumbangCo2} layout="vertical" margin={{ left: 4, right: 8 }}>
                 <XAxis type="number" hide />
-                <YAxis type="category" dataKey="nama" width={96} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis
+                  type="category"
+                  dataKey="nama"
+                  width={96}
+                  tick={{ fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip formatter={(v: number) => v + " g CO2e"} />
                 <Bar dataKey="co2" radius={[0, 6, 6, 0]}>
                   {s.penyumbangCo2.map((_, i) => (

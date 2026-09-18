@@ -11,7 +11,15 @@ export function ScaleUpBrief({ proyek, batch }: { proyek: Project; batch: Batch 
       <CardTitle
         title="Scale up risk brief untuk tim produksi"
         sub="Disusun dari pola proyek organisasi yang pernah naik skala pada kategori sejenis."
-        right={<Pill variant={b.tingkat === "tinggi" ? "bahaya" : b.tingkat === "sedang" ? "waspada" : "aman"}>Risiko {b.tingkat} {b.skor}/100</Pill>}
+        right={
+          <Pill
+            variant={
+              b.tingkat === "tinggi" ? "bahaya" : b.tingkat === "sedang" ? "waspada" : "aman"
+            }
+          >
+            Risiko {b.tingkat} {b.skor}/100
+          </Pill>
+        }
       />
       <p className="text-sm text-foreground">{b.ringkasan}</p>
 
@@ -31,7 +39,9 @@ export function ScaleUpBrief({ proyek, batch }: { proyek: Project; batch: Batch 
               <tr key={p.parameter} className="border-b border-border/70 align-top">
                 <td className="py-2 pr-3 font-semibold text-foreground">{p.parameter}</td>
                 <td className="py-2 pr-3">
-                  <Pill variant={p.skor >= 65 ? "bahaya" : p.skor >= 45 ? "waspada" : "aman"}>{p.skor}</Pill>
+                  <Pill variant={p.skor >= 65 ? "bahaya" : p.skor >= 45 ? "waspada" : "aman"}>
+                    {p.skor}
+                  </Pill>
                 </td>
                 <td className="py-2 pr-3 text-muted-foreground">{p.arah}</td>
                 <td className="py-2 pr-3 text-muted-foreground">{p.pemicu}</td>

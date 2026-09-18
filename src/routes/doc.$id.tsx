@@ -32,13 +32,22 @@ import { Bot, CheckCircle2, ClipboardList } from "lucide-react";
 type Search = { batch?: number | undefined };
 
 export const Route = createFileRoute("/doc/$id")({
-  validateSearch: (s: Record<string, unknown>): Search => ({ batch: s["batch"] ? Number(s["batch"]) : undefined }),
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    batch: s["batch"] ? Number(s["batch"]) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Editor Jurnal Praktikum | paralab.ai" },
-      { name: "description", content: "Editor dokumen jurnal praktikum laboratorium dengan penyuntingan bebas, tabel hasil uji, dan pengambilan nilai sensor." },
+      {
+        name: "description",
+        content:
+          "Editor dokumen jurnal praktikum laboratorium dengan penyuntingan bebas, tabel hasil uji, dan pengambilan nilai sensor.",
+      },
       { property: "og:title", content: "Editor Jurnal Praktikum | paralab.ai" },
-      { property: "og:description", content: "Menulis jurnal praktikum layaknya dokumen kerja, tersimpan otomatis." },
+      {
+        property: "og:description",
+        content: "Menulis jurnal praktikum layaknya dokumen kerja, tersimpan otomatis.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -80,11 +89,14 @@ function DokumenEditor() {
     siap.current = true;
   }, [proyek, batch]);
 
-
   const simpan = useCallback(() => {
     if (!proyek || !batch || !ref.current) return;
     const html = ref.current.innerHTML;
-    actions.simpanBatch(proyek.id, batch.nomor, (b) => ({ ...b, dokumen: html, dokumenDiubah: new Date().toISOString() }));
+    actions.simpanBatch(proyek.id, batch.nomor, (b) => ({
+      ...b,
+      dokumen: html,
+      dokumenDiubah: new Date().toISOString(),
+    }));
     setKata(hitungKata(html));
     setStatus("Semua perubahan tersimpan");
   }, [proyek, batch]);
@@ -101,7 +113,9 @@ function DokumenEditor() {
       <div className="flex min-h-screen items-center justify-center bg-secondary p-6">
         <div className="surface-card p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            {termuat ? "Dokumen jurnal tidak ditemukan pada perangkat ini." : "Memuat dokumen jurnal"}
+            {termuat
+              ? "Dokumen jurnal tidak ditemukan pada perangkat ini."
+              : "Memuat dokumen jurnal"}
           </p>
           <Link to="/dashboard" className="mt-3 inline-block text-sm font-semibold text-brand">
             Kembali ke dashboard
@@ -110,7 +124,6 @@ function DokumenEditor() {
       </div>
     );
   }
-
 
   function perintah(cmd: string, nilai?: string) {
     ref.current?.focus();
@@ -126,9 +139,24 @@ function DokumenEditor() {
 
   function sisipTabelHasil() {
     const baris = proyek!.targets
-      .map((t) => "<tr><td>" + t.label + "</td><td>" + t.target + " ± " + t.toleransi + " " + t.unit + "</td><td></td><td></td></tr>")
+      .map(
+        (t) =>
+          "<tr><td>" +
+          t.label +
+          "</td><td>" +
+          t.target +
+          " ± " +
+          t.toleransi +
+          " " +
+          t.unit +
+          "</td><td></td><td></td></tr>",
+      )
       .join("");
-    sisip("<table><thead><tr><th>Parameter</th><th>Target</th><th>Hasil</th><th>Catatan</th></tr></thead><tbody>" + baris + "</tbody></table><p></p>");
+    sisip(
+      "<table><thead><tr><th>Parameter</th><th>Target</th><th>Hasil</th><th>Catatan</th></tr></thead><tbody>" +
+        baris +
+        "</tbody></table><p></p>",
+    );
   }
 
   function sisipSensor() {
@@ -136,18 +164,35 @@ function DokumenEditor() {
     const isi = proyek!.targets
       .map((t) => {
         const nilai = bacaSatuSensor(t.sensor);
-        return "<li>" + t.label + ": " + (nilai === null ? "diisi manual" : nilai + " " + t.unit) + "</li>";
+        return (
+          "<li>" +
+          t.label +
+          ": " +
+          (nilai === null ? "diisi manual" : nilai + " " + t.unit) +
+          "</li>"
+        );
       })
       .join("");
-    sisip("<p><strong>Pembacaan sensor pukul " + waktu + "</strong></p><ul>" + isi + "</ul><p></p>");
-    actions.catat(user?.nama ?? proyek!.peneliti, proyek!.judul, "Pembacaan sensor", "Nilai sensor disisipkan ke dokumen jurnal batch " + batch!.nomor);
+    sisip(
+      "<p><strong>Pembacaan sensor pukul " + waktu + "</strong></p><ul>" + isi + "</ul><p></p>",
+    );
+    actions.catat(
+      user?.nama ?? proyek!.peneliti,
+      proyek!.judul,
+      "Pembacaan sensor",
+      "Nilai sensor disisipkan ke dokumen jurnal batch " + batch!.nomor,
+    );
   }
 
   function sisipGambar(file: File) {
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== "string") return;
-      sisip('<figure><img src="' + reader.result + '" alt="Gambar sampel penelitian" /><figcaption>Gambar sampel penelitian</figcaption></figure><p></p>');
+      sisip(
+        '<figure><img src="' +
+          reader.result +
+          '" alt="Gambar sampel penelitian" /><figcaption>Gambar sampel penelitian</figcaption></figure><p></p>',
+      );
     };
     reader.readAsDataURL(file);
   }
@@ -165,8 +210,17 @@ function DokumenEditor() {
       ujiSampelDimulai: b.ujiSampelDimulai ?? new Date().toISOString(),
       timeframeSiap: true,
     }));
-    actions.catat(user?.nama ?? proyekAktif.peneliti, proyekAktif.judul, "Uji timeframe sampel", "Feedback dan gambar spesimen akhir batch " + batchAktif.nomor + " disimpan");
-    navigate({ to: "/journal/$id", params: { id: proyekAktif.id }, search: { batch: batchAktif.nomor } });
+    actions.catat(
+      user?.nama ?? proyekAktif.peneliti,
+      proyekAktif.judul,
+      "Uji timeframe sampel",
+      "Feedback dan gambar spesimen akhir batch " + batchAktif.nomor + " disimpan",
+    );
+    navigate({
+      to: "/journal/$id",
+      params: { id: proyekAktif.id },
+      search: { batch: batchAktif.nomor },
+    });
   }
 
   const tombol =
@@ -191,7 +245,9 @@ function DokumenEditor() {
             <Logo compact />
           </Link>
           <div className="min-w-0">
-            <p className="truncate text-base font-bold text-foreground">Jurnal Praktikum {proyek.judul}</p>
+            <p className="truncate text-base font-bold text-foreground">
+              Jurnal Praktikum {proyek.judul}
+            </p>
             <p className="text-xs text-muted-foreground">
               Batch {batch.nomor} · {proyek.kategori} · {proyek.targets.length} parameter uji
             </p>
@@ -200,7 +256,10 @@ function DokumenEditor() {
             <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Cloud className="size-3.5" /> {status}
             </span>
-            <button onClick={() => window.print()} className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-secondary">
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-sm font-semibold text-foreground hover:bg-secondary"
+            >
               <Printer className="size-4" /> Cetak
             </button>
             <button
@@ -245,14 +304,26 @@ function DokumenEditor() {
           <button className={tombol} onClick={() => perintah("strikeThrough")} title="Coret">
             <Strikethrough className="size-4" />
           </button>
-          <button className={tombol} onClick={() => perintah("hiliteColor", "#fde68a")} title="Sorot">
+          <button
+            className={tombol}
+            onClick={() => perintah("hiliteColor", "#fde68a")}
+            title="Sorot"
+          >
             <Highlighter className="size-4" />
           </button>
           <span className="mx-1 h-5 w-px bg-border" />
-          <button className={tombol} onClick={() => perintah("insertUnorderedList")} title="Daftar titik">
+          <button
+            className={tombol}
+            onClick={() => perintah("insertUnorderedList")}
+            title="Daftar titik"
+          >
             <List className="size-4" />
           </button>
-          <button className={tombol} onClick={() => perintah("insertOrderedList")} title="Daftar angka">
+          <button
+            className={tombol}
+            onClick={() => perintah("insertOrderedList")}
+            title="Daftar angka"
+          >
             <ListOrdered className="size-4" />
           </button>
           <button className={tombol} onClick={() => perintah("justifyLeft")} title="Rata kiri">
@@ -301,7 +372,9 @@ function DokumenEditor() {
         <section className="w-full max-w-[816px] rounded-2xl border border-border bg-card p-6 print:hidden">
           <div className="flex items-center gap-2">
             <ClipboardList className="size-5 text-brand" />
-            <h2 className="text-base font-bold text-foreground">Dokumentasi akhir batch ke-{batch.nomor}</h2>
+            <h2 className="text-base font-bold text-foreground">
+              Dokumentasi akhir batch ke-{batch.nomor}
+            </h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Simpan kondisi spesimen dan feedback peneliti sebelum menjalankan uji timeframe sampel.
@@ -309,7 +382,10 @@ function DokumenEditor() {
 
           <SpesimenAkhir value={spesimen} onChange={setSpesimen} />
 
-          <label className="mt-4 block text-sm font-semibold text-foreground" htmlFor="feedback-batch">
+          <label
+            className="mt-4 block text-sm font-semibold text-foreground"
+            htmlFor="feedback-batch"
+          >
             Umpan balik peneliti
           </label>
           <textarea

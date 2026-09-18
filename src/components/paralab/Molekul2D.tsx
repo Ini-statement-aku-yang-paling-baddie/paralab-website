@@ -17,7 +17,10 @@ export function Molekul2D({ bahan, tinggi = 180 }: { bahan: Ingredient; tinggi?:
 
   return (
     <figure className="rounded-xl border border-border bg-card p-3">
-      <div className="flex items-center justify-center rounded-lg bg-secondary" style={{ height: tinggi }}>
+      <div
+        className="flex items-center justify-center rounded-lg bg-secondary"
+        style={{ height: tinggi }}
+      >
         {src ? (
           <img
             key={bahan.id + urutan}
@@ -31,12 +34,15 @@ export function Molekul2D({ bahan, tinggi = 180 }: { bahan: Ingredient; tinggi?:
         ) : (
           <div className="px-3 text-center">
             <p className="text-sm font-bold text-foreground">{bahan.rumus}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Struktur 2D belum tersedia pada basis data publik untuk bahan campuran ini.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Struktur 2D belum tersedia pada basis data publik untuk bahan campuran ini.
+            </p>
           </div>
         )}
       </div>
       <figcaption className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-        {bahan.name} · rumus {bahan.rumus} · bobot molekul {bahan.bm} g/mol · CAS {bahan.cas}. Gambar struktur bersumber dari basis data publik PubChem.
+        {bahan.name} · rumus {bahan.rumus} · bobot molekul {bahan.bm} g/mol · CAS {bahan.cas}.
+        Gambar struktur bersumber dari basis data publik PubChem.
       </figcaption>
     </figure>
   );

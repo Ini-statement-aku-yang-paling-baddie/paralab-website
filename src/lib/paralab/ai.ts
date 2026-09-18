@@ -84,7 +84,6 @@ export const TIPE_KULIT_OPSI = [
   "Semua jenis kulit",
 ];
 
-
 const KLAIM_BAHAN: Record<string, string[]> = {
   "Kontrol minyak": ["zinc", "salicylic"],
   Mencerahkan: ["niacinamide", "vitc"],
@@ -184,13 +183,55 @@ const BATAS_KADAR: {
   maks: number;
   acuan: string;
 }[] = [
-  { id: "retinol", ruleId: "WEB-LIMIT-001", sourceId: "WEB-RULESRC-101", maks: 0.3, acuan: "PerBPOM 17/2022, lampiran bahan dibatasi" },
-  { id: "salicylic", ruleId: "WEB-LIMIT-002", sourceId: "WEB-RULESRC-102", maks: 2, acuan: "PerBPOM 17/2022, leave-on" },
-  { id: "phenoxy", ruleId: "WEB-LIMIT-003", sourceId: "WEB-RULESRC-103", maks: 1, acuan: "PerBPOM 17/2022, pengawet" },
-  { id: "aha", ruleId: "WEB-LIMIT-004", sourceId: "WEB-RULESRC-104", maks: 10, acuan: "PerBPOM 17/2022, eksfolian" },
-  { id: "kojic", ruleId: "WEB-LIMIT-005", sourceId: "WEB-RULESRC-105", maks: 2, acuan: "PerBPOM 17/2022, pencerah" },
-  { id: "niacin_sunscreen", ruleId: "WEB-LIMIT-006", sourceId: "WEB-RULESRC-106", maks: 10, acuan: "PerBPOM 17/2022, UV filter" },
-  { id: "zinc_oxide", ruleId: "WEB-LIMIT-007", sourceId: "WEB-RULESRC-107", maks: 25, acuan: "PerBPOM 17/2022, UV filter" },
+  {
+    id: "retinol",
+    ruleId: "WEB-LIMIT-001",
+    sourceId: "WEB-RULESRC-101",
+    maks: 0.3,
+    acuan: "PerBPOM 17/2022, lampiran bahan dibatasi",
+  },
+  {
+    id: "salicylic",
+    ruleId: "WEB-LIMIT-002",
+    sourceId: "WEB-RULESRC-102",
+    maks: 2,
+    acuan: "PerBPOM 17/2022, leave-on",
+  },
+  {
+    id: "phenoxy",
+    ruleId: "WEB-LIMIT-003",
+    sourceId: "WEB-RULESRC-103",
+    maks: 1,
+    acuan: "PerBPOM 17/2022, pengawet",
+  },
+  {
+    id: "aha",
+    ruleId: "WEB-LIMIT-004",
+    sourceId: "WEB-RULESRC-104",
+    maks: 10,
+    acuan: "PerBPOM 17/2022, eksfolian",
+  },
+  {
+    id: "kojic",
+    ruleId: "WEB-LIMIT-005",
+    sourceId: "WEB-RULESRC-105",
+    maks: 2,
+    acuan: "PerBPOM 17/2022, pencerah",
+  },
+  {
+    id: "niacin_sunscreen",
+    ruleId: "WEB-LIMIT-006",
+    sourceId: "WEB-RULESRC-106",
+    maks: 10,
+    acuan: "PerBPOM 17/2022, UV filter",
+  },
+  {
+    id: "zinc_oxide",
+    ruleId: "WEB-LIMIT-007",
+    sourceId: "WEB-RULESRC-107",
+    maks: 25,
+    acuan: "PerBPOM 17/2022, UV filter",
+  },
 ];
 
 export type PelanggaranKadar = {
@@ -207,11 +248,7 @@ export type PelanggaranKadar = {
  * `clear_for_current_screening` berarti tidak ada rule prototipe yang aktif,
  * bukan formula dinyatakan halal, aman, atau lolos BPOM.
  */
-export type StatusSkrining =
-  | "clear_for_current_screening"
-  | "warning"
-  | "blocked"
-  | "unknown";
+export type StatusSkrining = "clear_for_current_screening" | "warning" | "blocked" | "unknown";
 
 export const LABEL_SKRINING: Record<StatusSkrining, string> = {
   clear_for_current_screening: "tidak ada rule aktif",
@@ -273,8 +310,12 @@ export function prediksiParameter(list: Ingredient[], targets: TargetParam[]) {
   const pengental = list
     .filter((b) => ["cetearyl", "xanthan", "carbomer", "gms", "clay"].includes(b.id))
     .reduce((t, b) => t + b.percent, 0);
-  const asam = list.filter((b) => ["aha", "salicylic", "vitc", "kojic"].includes(b.id)).reduce((t, b) => t + b.percent, 0);
-  const emulsifier = list.filter((b) => ["gms", "cetearyl"].includes(b.id)).reduce((t, b) => t + b.percent, 0);
+  const asam = list
+    .filter((b) => ["aha", "salicylic", "vitc", "kojic"].includes(b.id))
+    .reduce((t, b) => t + b.percent, 0);
+  const emulsifier = list
+    .filter((b) => ["gms", "cetearyl"].includes(b.id))
+    .reduce((t, b) => t + b.percent, 0);
 
   const prediksi: Record<string, number> = {
     ph: Number(Math.max(3.2, 6.2 - asam * 0.28).toFixed(2)),
@@ -299,7 +340,9 @@ export function prediksiParameter(list: Ingredient[], targets: TargetParam[]) {
 }
 
 export function kurvaStabilitas(list: Ingredient[]) {
-  const emulsifier = list.filter((b) => ["gms", "cetearyl", "xanthan"].includes(b.id)).reduce((t, b) => t + b.percent, 0);
+  const emulsifier = list
+    .filter((b) => ["gms", "cetearyl", "xanthan"].includes(b.id))
+    .reduce((t, b) => t + b.percent, 0);
   const skor = Math.min(98, 62 + emulsifier * 4);
   return [0, 3, 7, 14, 21, 28].map((hari) => ({
     hari: "H" + hari,
@@ -311,7 +354,10 @@ export function kurvaStabilitas(list: Ingredient[]) {
 
 export function kontribusiBiaya(list: Ingredient[]) {
   return list
-    .map((b) => ({ nama: b.name, biaya: Math.round((b.percent / 100) * (b.hargaPerKg / 1000) * 50) }))
+    .map((b) => ({
+      nama: b.name,
+      biaya: Math.round((b.percent / 100) * (b.hargaPerKg / 1000) * 50),
+    }))
     .filter((x) => x.biaya > 0)
     .sort((a, b) => b.biaya - a.biaya)
     .slice(0, 6);
@@ -340,10 +386,17 @@ export function alasanRelevansi(p: Project) {
   const last = p.batches[p.batches.length - 1];
   if (!last) return "Proyek masih tahap perencanaan, brief dapat dijadikan pembanding awal.";
   if (last.evaluasi) return last.evaluasi.ringkasan;
-  return "Batch " + last.nomor + " sedang berjalan dengan tujuan " + last.tujuan.join(" dan ") + ".";
+  return (
+    "Batch " + last.nomor + " sedang berjalan dengan tujuan " + last.tujuan.join(" dan ") + "."
+  );
 }
 
-export function buatJurnalKosong(brief: Brief, bahan: Ingredient[], targets: TargetParam[], nomor = 1): Batch {
+export function buatJurnalKosong(
+  brief: Brief,
+  bahan: Ingredient[],
+  targets: TargetParam[],
+  nomor = 1,
+): Batch {
   const prediksi = prediksiParameter(bahan, targets);
   return {
     nomor,
@@ -352,11 +405,15 @@ export function buatJurnalKosong(brief: Brief, bahan: Ingredient[], targets: Tar
     tujuan: [
       "Memverifikasi formula usulan AI untuk " + brief.judul.toLowerCase(),
       "Mengukur " + targets.map((t) => t.label.toLowerCase()).join(", ") + " terhadap target",
-      brief.klaim.length > 0 ? "Menilai klaim " + brief.klaim.join(", ").toLowerCase() : "Menilai sensori dasar produk",
+      brief.klaim.length > 0
+        ? "Menilai klaim " + brief.klaim.join(", ").toLowerCase()
+        : "Menilai sensori dasar produk",
     ],
     hipotesis:
       "Formula usulan menghasilkan " +
-      prediksi.map((p) => p.label.toLowerCase() + " sekitar " + p.prediksi + " " + p.unit).join(", ") +
+      prediksi
+        .map((p) => p.label.toLowerCase() + " sekitar " + p.prediksi + " " + p.unit)
+        .join(", ") +
       " dan memenuhi jendela target yang ditetapkan.",
     prosedur: [
       "Timbang seluruh bahan sesuai tabel formula dan catat nomor lot",
@@ -372,7 +429,11 @@ export function buatJurnalKosong(brief: Brief, bahan: Ingredient[], targets: Tar
   };
 }
 
-export function evaluasiBatch(batch: Batch, targets: TargetParam[], feedback: string): BatchEvaluation {
+export function evaluasiBatch(
+  batch: Batch,
+  targets: TargetParam[],
+  feedback: string,
+): BatchEvaluation {
   const kekurangan: string[] = [];
   const rekomendasi: string[] = [];
   const perubahanFormula: BatchEvaluation["perubahanFormula"] = [];
@@ -390,14 +451,24 @@ export function evaluasiBatch(batch: Batch, targets: TargetParam[], feedback: st
       continue;
     }
     const arah = delta > 0 ? "di atas" : "di bawah";
-    kekurangan.push(t.label + " " + arah + " target sebesar " + Math.abs(Number(delta.toFixed(2))) + " " + t.unit);
+    kekurangan.push(
+      t.label + " " + arah + " target sebesar " + Math.abs(Number(delta.toFixed(2))) + " " + t.unit,
+    );
 
     if (t.id === "ph") {
-      rekomendasi.push(delta > 0 ? "Tambahkan larutan asam sitrat bertahap 0.05 persen sampai pH menyentuh target" : "Netralkan dengan trietanolamin 0.05 persen");
+      rekomendasi.push(
+        delta > 0
+          ? "Tambahkan larutan asam sitrat bertahap 0.05 persen sampai pH menyentuh target"
+          : "Netralkan dengan trietanolamin 0.05 persen",
+      );
     }
     if (t.id === "viskositas") {
       const cet = batch.bahan.find((b) => b.id === "cetearyl");
-      rekomendasi.push(delta > 0 ? "Turunkan pengental struktural sekitar 0.5 persen" : "Naikkan pengental struktural sekitar 1 persen");
+      rekomendasi.push(
+        delta > 0
+          ? "Turunkan pengental struktural sekitar 0.5 persen"
+          : "Naikkan pengental struktural sekitar 1 persen",
+      );
       if (cet) {
         perubahanFormula.push({
           bahan: cet.name,
@@ -411,26 +482,37 @@ export function evaluasiBatch(batch: Batch, targets: TargetParam[], feedback: st
       rekomendasi.push("Perpanjang homogenisasi menjadi 10 menit pada 3400 rpm");
       const gms = batch.bahan.find((b) => b.id === "gms");
       if (gms && delta > 0) {
-        perubahanFormula.push({ bahan: gms.name, dari: gms.percent, ke: Number((gms.percent + 0.5).toFixed(2)), alasan: "Memperkecil droplet emulsi" });
+        perubahanFormula.push({
+          bahan: gms.name,
+          dari: gms.percent,
+          ke: Number((gms.percent + 0.5).toFixed(2)),
+          alasan: "Memperkecil droplet emulsi",
+        });
       }
     }
-    if (t.id === "turbiditas") rekomendasi.push("Saring sampel pada 5 mikron dan periksa dispersi serbuk");
+    if (t.id === "turbiditas")
+      rekomendasi.push("Saring sampel pada 5 mikron dan periksa dispersi serbuk");
   }
 
   const clashes = deteksiClash(batch.bahan);
-  for (const c of clashes) rekomendasi.push("Pisahkan fase " + c.a + " dan " + c.b + " atau sesuaikan pH kerja");
+  for (const c of clashes)
+    rekomendasi.push("Pisahkan fase " + c.a + " dan " + c.b + " atau sesuaikan pH kerja");
 
   const kepatuhan = ringkasKepatuhan(batch.bahan);
-  for (const b of kepatuhan.syubhat) kekurangan.push("Status halal " + b.name + " masih perlu verifikasi dokumen pemasok");
+  for (const b of kepatuhan.syubhat)
+    kekurangan.push("Status halal " + b.name + " masih perlu verifikasi dokumen pemasok");
   for (const b of kepatuhan.melanggar) kekurangan.push("Kadar " + b.name + " melewati batas BPOM");
 
-  if (feedback.trim().length > 0) rekomendasi.push("Tindak lanjuti catatan peneliti: " + feedback.trim());
+  if (feedback.trim().length > 0)
+    rekomendasi.push("Tindak lanjuti catatan peneliti: " + feedback.trim());
   if (batch.observasi.toLowerCase().includes("pisah")) {
     kekurangan.push("Terlihat tanda pemisahan fase pada observasi visual");
     rekomendasi.push("Tambahkan uji sentrifugasi 3000 rpm selama 30 menit pada batch berikutnya");
   }
 
-  const skor = Math.round((lolos / Math.max(targets.length, 1)) * 100 - kepatuhan.syubhat.length * 4 - clashes.length * 3);
+  const skor = Math.round(
+    (lolos / Math.max(targets.length, 1)) * 100 - kepatuhan.syubhat.length * 4 - clashes.length * 3,
+  );
 
   return {
     ringkasan:
@@ -443,9 +525,14 @@ export function evaluasiBatch(batch: Batch, targets: TargetParam[], feedback: st
       " parameter target. " +
       (kekurangan.length === 0
         ? "Tidak ada temuan kritis, formula siap masuk tahap serah terima."
-        : "Terdapat " + kekurangan.length + " temuan yang perlu ditindaklanjuti pada batch berikutnya."),
+        : "Terdapat " +
+          kekurangan.length +
+          " temuan yang perlu ditindaklanjuti pada batch berikutnya."),
     kekurangan,
-    rekomendasi: rekomendasi.length > 0 ? rekomendasi : ["Pertahankan parameter proses saat ini dan lanjutkan uji stabilitas 28 hari"],
+    rekomendasi:
+      rekomendasi.length > 0
+        ? rekomendasi
+        : ["Pertahankan parameter proses saat ini dan lanjutkan uji stabilitas 28 hari"],
     perubahanFormula,
     rancanganBerikutnya: {
       tujuan:
@@ -475,37 +562,175 @@ export function ringkasBiaya(list: Ingredient[]) {
 }
 
 const KLAIM_BENTUK: Record<string, string[]> = {
-  Pembersih: ["Kontrol minyak", "Mengurangi jerawat", "Non komedogenik", "Eksfoliasi lembut", "Menyegarkan dan mendinginkan", "Bebas alkohol", "Mengecilkan tampilan pori", "Mengurangi kulit kusam"],
-  Toner: ["Menenangkan kulit", "Mengurangi kemerahan", "Eksfoliasi lembut", "Melembapkan", "Mengecilkan tampilan pori", "Meratakan warna kulit", "Bebas alkohol"],
-  Essence: ["Melembapkan", "Melembapkan 24 jam", "Memperbaiki skin barrier", "Ringan dan cepat meresap", "Menghaluskan tekstur kulit"],
-  Serum: ["Mencerahkan", "Anti penuaan", "Menyamarkan garis halus", "Mengencangkan kulit", "Menyamarkan bekas jerawat", "Meratakan warna kulit", "Mengurangi jerawat", "Memperbaiki skin barrier", "Anti polusi", "Ringan dan cepat meresap"],
-  Pelembap: ["Melembapkan 24 jam", "Memperbaiki skin barrier", "Menutrisi kulit kering", "Tidak lengket", "Non komedogenik", "Menenangkan kulit", "Cocok dipakai di bawah riasan"],
-  Masker: ["Mencerahkan", "Menenangkan kulit", "Melembapkan", "Mengecilkan tampilan pori", "Menghaluskan tekstur kulit"],
-  "Tabir Surya": ["Perlindungan UV", "Tanpa whitecast", "Tahan air", "Tidak lengket", "Cocok dipakai di bawah riasan", "Melindungi dari sinar biru", "Non komedogenik"],
-  "Perawatan Mata": ["Menyamarkan garis halus", "Mengencangkan kulit", "Melembapkan", "Aman untuk kulit sensitif"],
-  "Perawatan Bibir": ["Melembapkan 24 jam", "Menutrisi kulit kering", "Eksfoliasi lembut", "Bebas pewangi"],
-  "Perawatan Tubuh": ["Mencerahkan", "Melembapkan 24 jam", "Menutrisi kulit kering", "Ringan dan cepat meresap", "Halal dan aman untuk keluarga"],
-  "Perawatan Tangan": ["Melembapkan", "Memperbaiki skin barrier", "Ringan dan cepat meresap", "Bebas pewangi"],
+  Pembersih: [
+    "Kontrol minyak",
+    "Mengurangi jerawat",
+    "Non komedogenik",
+    "Eksfoliasi lembut",
+    "Menyegarkan dan mendinginkan",
+    "Bebas alkohol",
+    "Mengecilkan tampilan pori",
+    "Mengurangi kulit kusam",
+  ],
+  Toner: [
+    "Menenangkan kulit",
+    "Mengurangi kemerahan",
+    "Eksfoliasi lembut",
+    "Melembapkan",
+    "Mengecilkan tampilan pori",
+    "Meratakan warna kulit",
+    "Bebas alkohol",
+  ],
+  Essence: [
+    "Melembapkan",
+    "Melembapkan 24 jam",
+    "Memperbaiki skin barrier",
+    "Ringan dan cepat meresap",
+    "Menghaluskan tekstur kulit",
+  ],
+  Serum: [
+    "Mencerahkan",
+    "Anti penuaan",
+    "Menyamarkan garis halus",
+    "Mengencangkan kulit",
+    "Menyamarkan bekas jerawat",
+    "Meratakan warna kulit",
+    "Mengurangi jerawat",
+    "Memperbaiki skin barrier",
+    "Anti polusi",
+    "Ringan dan cepat meresap",
+  ],
+  Pelembap: [
+    "Melembapkan 24 jam",
+    "Memperbaiki skin barrier",
+    "Menutrisi kulit kering",
+    "Tidak lengket",
+    "Non komedogenik",
+    "Menenangkan kulit",
+    "Cocok dipakai di bawah riasan",
+  ],
+  Masker: [
+    "Mencerahkan",
+    "Menenangkan kulit",
+    "Melembapkan",
+    "Mengecilkan tampilan pori",
+    "Menghaluskan tekstur kulit",
+  ],
+  "Tabir Surya": [
+    "Perlindungan UV",
+    "Tanpa whitecast",
+    "Tahan air",
+    "Tidak lengket",
+    "Cocok dipakai di bawah riasan",
+    "Melindungi dari sinar biru",
+    "Non komedogenik",
+  ],
+  "Perawatan Mata": [
+    "Menyamarkan garis halus",
+    "Mengencangkan kulit",
+    "Melembapkan",
+    "Aman untuk kulit sensitif",
+  ],
+  "Perawatan Bibir": [
+    "Melembapkan 24 jam",
+    "Menutrisi kulit kering",
+    "Eksfoliasi lembut",
+    "Bebas pewangi",
+  ],
+  "Perawatan Tubuh": [
+    "Mencerahkan",
+    "Melembapkan 24 jam",
+    "Menutrisi kulit kering",
+    "Ringan dan cepat meresap",
+    "Halal dan aman untuk keluarga",
+  ],
+  "Perawatan Tangan": [
+    "Melembapkan",
+    "Memperbaiki skin barrier",
+    "Ringan dan cepat meresap",
+    "Bebas pewangi",
+  ],
   "Perawatan Wajah": ["Mencerahkan", "Melembapkan", "Menenangkan kulit", "Anti polusi"],
-  "Perawatan Rambut": ["Menutrisi rambut rusak", "Mengurangi ketombe", "Bebas pewangi", "Vegan dan bebas uji hewan"],
-  Riasan: ["Cocok dipakai di bawah riasan", "Tahan air", "Non komedogenik", "Meratakan warna kulit", "Tidak lengket"],
-  "Perawatan Personal": ["Menyegarkan dan mendinginkan", "Bebas alkohol", "Halal dan aman untuk keluarga", "Bebas pewangi"],
-  "Perawatan Bayi": ["Aman untuk kulit sensitif", "Bebas pewangi", "Bebas alkohol", "Melembapkan", "Halal dan aman untuk keluarga"],
+  "Perawatan Rambut": [
+    "Menutrisi rambut rusak",
+    "Mengurangi ketombe",
+    "Bebas pewangi",
+    "Vegan dan bebas uji hewan",
+  ],
+  Riasan: [
+    "Cocok dipakai di bawah riasan",
+    "Tahan air",
+    "Non komedogenik",
+    "Meratakan warna kulit",
+    "Tidak lengket",
+  ],
+  "Perawatan Personal": [
+    "Menyegarkan dan mendinginkan",
+    "Bebas alkohol",
+    "Halal dan aman untuk keluarga",
+    "Bebas pewangi",
+  ],
+  "Perawatan Bayi": [
+    "Aman untuk kulit sensitif",
+    "Bebas pewangi",
+    "Bebas alkohol",
+    "Melembapkan",
+    "Halal dan aman untuk keluarga",
+  ],
 };
 
-const KLAIM_UMUM = ["Halal dan aman untuk keluarga", "Vegan dan bebas uji hewan", "Aman untuk kulit sensitif"];
+const KLAIM_UMUM = [
+  "Halal dan aman untuk keluarga",
+  "Vegan dan bebas uji hewan",
+  "Aman untuk kulit sensitif",
+];
 
 const KULIT_BENTUK: Record<string, string[]> = {
-  Pembersih: ["Berminyak", "Kombinasi", "Berjerawat aktif", "Rawan komedo", "Kulit pria berminyak", "Kulit remaja", "Normal"],
+  Pembersih: [
+    "Berminyak",
+    "Kombinasi",
+    "Berjerawat aktif",
+    "Rawan komedo",
+    "Kulit pria berminyak",
+    "Kulit remaja",
+    "Normal",
+  ],
   Toner: ["Berminyak", "Kombinasi", "Kusam dan tidak merata", "Rawan komedo", "Sensitif", "Normal"],
   Essence: ["Dehidrasi", "Normal", "Kombinasi", "Barrier rusak"],
-  Serum: ["Kusam dan tidak merata", "Hiperpigmentasi", "Matang dengan garis halus", "Berjerawat aktif", "Dehidrasi", "Barrier rusak", "Normal"],
-  Pelembap: ["Kering", "Dehidrasi", "Sensitif", "Barrier rusak", "Normal", "Kombinasi", "Berminyak"],
+  Serum: [
+    "Kusam dan tidak merata",
+    "Hiperpigmentasi",
+    "Matang dengan garis halus",
+    "Berjerawat aktif",
+    "Dehidrasi",
+    "Barrier rusak",
+    "Normal",
+  ],
+  Pelembap: [
+    "Kering",
+    "Dehidrasi",
+    "Sensitif",
+    "Barrier rusak",
+    "Normal",
+    "Kombinasi",
+    "Berminyak",
+  ],
   Masker: ["Kusam dan tidak merata", "Berminyak", "Kering", "Normal"],
-  "Tabir Surya": ["Semua jenis kulit", "Sensitif terhadap matahari", "Berminyak", "Rawan komedo", "Kulit iklim tropis lembap"],
+  "Tabir Surya": [
+    "Semua jenis kulit",
+    "Sensitif terhadap matahari",
+    "Berminyak",
+    "Rawan komedo",
+    "Kulit iklim tropis lembap",
+  ],
   "Perawatan Mata": ["Matang dengan garis halus", "Sensitif", "Dehidrasi"],
   "Perawatan Bibir": ["Kering", "Sensitif", "Semua jenis kulit"],
-  "Perawatan Tubuh": ["Kulit tubuh kering bersisik", "Kusam dan tidak merata", "Normal", "Semua jenis kulit"],
+  "Perawatan Tubuh": [
+    "Kulit tubuh kering bersisik",
+    "Kusam dan tidak merata",
+    "Normal",
+    "Semua jenis kulit",
+  ],
   "Perawatan Tangan": ["Kulit tubuh kering bersisik", "Barrier rusak", "Sensitif"],
   "Perawatan Wajah": ["Semua jenis kulit", "Normal", "Kombinasi"],
   "Perawatan Rambut": ["Semua jenis kulit", "Sensitif"],
