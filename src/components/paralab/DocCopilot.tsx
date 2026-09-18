@@ -1,10 +1,34 @@
 import { useMemo, useRef, useState } from "react";
-import { Send, X } from "lucide-react";
+import { FileSearch, Send, ShieldCheck, X } from "lucide-react";
 import { formatRupiah, hitungHpp, type Batch, type Project } from "@/lib/paralab/data";
 import { PARAM_LIBRARY } from "@/lib/paralab/catalog";
 import { deteksiClash, prediksiParameter, ringkasKepatuhan } from "@/lib/paralab/ai";
+import { ModelApiError, postJson } from "@/lib/paralab/api";
+import { BandProvenance } from "./BandProvenance";
+export type F1EvidenceCard = {
+  source_id: string;
+  hybrid_score?: number;
+  outcome?: string;
+  failure_mode?: string;
+  journal_title?: string;
+};
 
-type Pesan = { peran: "ai" | "user"; teks: string };
+export type F1QueryResponse = {
+  query: string;
+  evidence_status: string;
+  evidence: F1EvidenceCard[];
+  answer: { summary: string; limitations: string } | null;
+  requires_human_review?: boolean;
+  limitations?: string[];
+};
+
+type Pesan = {
+  peran: "ai" | "user";
+  teks?: string;
+  hasil?: F1QueryResponse;
+  /** True bila jawaban berasal dari rule lokal karena gateway model tidak tersedia. */
+  lokal?: boolean;
+};
 
 const SARAN = [
   "Ringkas jurnal ini",
@@ -30,7 +54,9 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
   });
 
   if (t.includes("hpp") || t.includes("biaya") || t.includes("harga")) {
-    const mahal = [...batch.bahan].sort((a, b) => b.percent * b.hargaPerKg - a.percent * a.hargaPerKg)[0];
+    const mahal = [...batch.bahan].sort(
+      (a, b) => b.percent * b.hargaPerKg - a.percent * a.hargaPerKg,
+    )[0];
     return (
       "Perkiraan harga pokok batch " +
       batch.nomor +
@@ -42,7 +68,13 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
       formatRupiah(hpp.kemasan) +
       ", dan proses " +
       formatRupiah(hpp.produksi) +
-      (mahal ? ". Penyumbang biaya terbesar adalah " + mahal.name + " pada kadar " + mahal.percent + " persen." : ".")
+      (mahal
+        ? ". Penyumbang biaya terbesar adalah " +
+          mahal.name +
+          " pada kadar " +
+          mahal.percent +
+          " persen."
+        : ".")
     );
   }
 
@@ -60,8 +92,14 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
     );
   }
 
-  if (t.includes("clash") || t.includes("risiko") || t.includes("interaksi") || t.includes("berisiko")) {
-    if (clash.length === 0) return "Tidak ditemukan interaksi kritis antar bahan pada formula batch ini. Tetap pisahkan fase air dan minyak sesuai prosedur dan periksa pH kerja setiap aktif.";
+  if (
+    t.includes("clash") ||
+    t.includes("risiko") ||
+    t.includes("interaksi") ||
+    t.includes("berisiko")
+  ) {
+    if (clash.length === 0)
+      return "Tidak ditemukan interaksi kritis antar bahan pada formula batch ini. Tetap pisahkan fase air dan minyak sesuai prosedur dan periksa pH kerja setiap aktif.";
     return (
       "Ada " +
       clash.length +
@@ -71,12 +109,33 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
   }
 
   if (t.includes("belum") || t.includes("kosong") || t.includes("parameter")) {
-    if (kosong.length === 0) return "Seluruh " + proyek.targets.length + " parameter sudah terisi. " + (diluar.length === 0 ? "Semua nilai berada dalam jendela target." : "Namun " + diluar.map((p) => p.label).join(", ") + " masih di luar toleransi.");
-    return "Parameter yang belum terisi: " + kosong.map((p) => p.label + " (" + (PARAM_LIBRARY.find((x) => x.id === p.id)?.metode ?? "metode internal") + ")").join("; ") + ".";
+    if (kosong.length === 0)
+      return (
+        "Seluruh " +
+        proyek.targets.length +
+        " parameter sudah terisi. " +
+        (diluar.length === 0
+          ? "Semua nilai berada dalam jendela target."
+          : "Namun " + diluar.map((p) => p.label).join(", ") + " masih di luar toleransi.")
+      );
+    return (
+      "Parameter yang belum terisi: " +
+      kosong
+        .map(
+          (p) =>
+            p.label +
+            " (" +
+            (PARAM_LIBRARY.find((x) => x.id === p.id)?.metode ?? "metode internal") +
+            ")",
+        )
+        .join("; ") +
+      "."
+    );
   }
 
   if (t.includes("rekomendasi") || t.includes("batch berikut") || t.includes("saran")) {
-    if (diluar.length === 0 && kosong.length === 0) return "Data batch ini memenuhi target. Rekomendasi berikutnya adalah konfirmasi stabilitas 28 hari, uji panel sensori internal, dan verifikasi konsistensi saat kenaikan skala.";
+    if (diluar.length === 0 && kosong.length === 0)
+      return "Data batch ini memenuhi target. Rekomendasi berikutnya adalah konfirmasi stabilitas 28 hari, uji panel sensori internal, dan verifikasi konsistensi saat kenaikan skala.";
     const daftar = diluar.map((p) => {
       const h = batch.hasil.find((x) => x.paramId === p.id)!;
       const arah = h.nilai! > p.target ? "di atas" : "di bawah";
@@ -92,7 +151,12 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
             : "sesuaikan bahan pendukung dan parameter proses terkait";
       return p.label + " " + arah + " target, " + aksi;
     });
-    return "Untuk batch berikutnya: " + daftar.join("; ") + (kosong.length > 0 ? "; lengkapi dulu data " + kosong.map((p) => p.label).join(", ") : "") + ".";
+    return (
+      "Untuk batch berikutnya: " +
+      daftar.join("; ") +
+      (kosong.length > 0 ? "; lengkapi dulu data " + kosong.map((p) => p.label).join(", ") : "") +
+      "."
+    );
   }
 
   if (t.includes("prosedur") || t.includes("proses") || t.includes("cara")) {
@@ -117,7 +181,16 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
 
   if (t.includes("prediksi") || t.includes("stabil")) {
     const pr = prediksiParameter(batch.bahan, proyek.targets);
-    return "Prediksi model untuk formula ini: " + pr.map((p) => p.label + " " + p.prediksi + " " + p.unit + " (keyakinan " + p.keyakinan + " persen)").join(", ") + ".";
+    return (
+      "Estimasi heuristik lokal untuk formula ini: " +
+      pr
+        .map(
+          (p) =>
+            p.label + " " + p.prediksi + " " + p.unit + " (keyakinan " + p.keyakinan + " persen)",
+        )
+        .join(", ") +
+      "."
+    );
   }
 
   return (
@@ -143,7 +216,15 @@ function jawab(proyek: Project, batch: Batch, tanya: string): string {
   );
 }
 
-export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch: Batch; onTutup: () => void }) {
+export function DocCopilot({
+  proyek,
+  batch,
+  onTutup,
+}: {
+  proyek: Project;
+  batch: Batch;
+  onTutup: () => void;
+}) {
   const awal = useMemo<Pesan[]>(
     () => [
       {
@@ -160,14 +241,38 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
   );
   const [pesan, setPesan] = useState<Pesan[]>(awal);
   const [teks, setTeks] = useState("");
+  const [memuat, setMemuat] = useState(false);
   const akhir = useRef<HTMLDivElement>(null);
 
-  function kirim(isi: string) {
+  async function kirim(isi: string) {
     const bersih = isi.trim();
-    if (bersih.length === 0) return;
-    setPesan((p) => [...p, { peran: "user", teks: bersih }, { peran: "ai", teks: jawab(proyek, batch, bersih) }]);
+    if (bersih.length === 0 || memuat) return;
+
+    setPesan((p) => [...p, { peran: "user", teks: bersih }]);
     setTeks("");
-    window.setTimeout(() => akhir.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    setMemuat(true);
+
+    try {
+      const hasil = await postJson<F1QueryResponse>("/v1/f1/query", { query: bersih });
+      setPesan((p) => [...p, { peran: "ai", hasil }]);
+    } catch (error) {
+      if (error instanceof TypeError) {
+        // Fallback hanya untuk kegagalan transport saat gateway tidak dapat dijangkau.
+        setPesan((p) => [...p, { peran: "ai", teks: jawab(proyek, batch, bersih), lokal: true }]);
+      } else {
+        const alasan =
+          error instanceof ModelApiError
+            ? error.message
+            : "Terjadi kegagalan tak terduga; tidak ada jawaban lokal yang diterbitkan.";
+        setPesan((p) => [
+          ...p,
+          { peran: "ai", teks: "F1 tidak menerbitkan jawaban. Alasan server: " + alasan },
+        ]);
+      }
+    } finally {
+      setMemuat(false);
+      window.setTimeout(() => akhir.current?.scrollIntoView?.({ behavior: "smooth" }), 50);
+    }
   }
 
   return (
@@ -175,9 +280,15 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <div>
           <p className="text-sm font-bold text-foreground">AI Copilot Jurnal</p>
-          <p className="text-xs text-muted-foreground">Dilatih dari batch {batch.nomor} pada dokumen ini</p>
+          <p className="text-xs text-muted-foreground">
+            Dilatih dari batch {batch.nomor} pada dokumen ini
+          </p>
         </div>
-        <button onClick={onTutup} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Tutup copilot">
+        <button
+          onClick={onTutup}
+          className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          aria-label="Tutup copilot"
+        >
           <X className="size-4" />
         </button>
       </header>
@@ -185,23 +296,38 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {pesan.map((m, i) => (
           <div key={i} className={m.peran === "user" ? "flex justify-end" : ""}>
-            <p
-              className={
-                m.peran === "user"
-                  ? "max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm text-primary-foreground"
-                  : "max-w-[92%] text-sm leading-6 text-foreground"
-              }
-            >
-              {m.teks}
-            </p>
+            {m.peran === "user" && (
+              <p className="max-w-[85%] rounded-2xl bg-primary px-3 py-2 text-sm text-primary-foreground">
+                {m.teks}
+              </p>
+            )}
+
+            {m.peran === "ai" && m.hasil && <HasilF1 hasil={m.hasil} />}
+
+            {m.peran === "ai" && !m.hasil && m.teks && (
+              <div className="max-w-[92%] space-y-1.5">
+                {m.lokal && (
+                  <BandProvenance
+                    lapis="heuristik"
+                    tambahan="Gateway model tidak tersedia; jawaban berikut berasal dari heuristik lokal."
+                  />
+                )}
+                <p className="text-sm leading-6 text-foreground">{m.teks}</p>
+              </div>
+            )}
           </div>
         ))}
+        {memuat && <p className="text-xs text-muted-foreground">Mencari evidence…</p>}
         <div ref={akhir} />
       </div>
 
       <div className="flex flex-wrap gap-1.5 border-t border-border px-4 py-2">
         {SARAN.map((s) => (
-          <button key={s} onClick={() => kirim(s)} className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
+          <button
+            key={s}
+            onClick={() => void kirim(s)}
+            className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
             {s}
           </button>
         ))}
@@ -210,7 +336,7 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          kirim(teks);
+          void kirim(teks);
         }}
         className="flex items-center gap-2 border-t border-border px-4 py-3"
       >
@@ -220,10 +346,71 @@ export function DocCopilot({ proyek, batch, onTutup }: { proyek: Project; batch:
           placeholder="Tanya tentang jurnal ini"
           className="h-10 flex-1 rounded-xl border border-input bg-card px-3 text-sm outline-none focus:border-brand"
         />
-        <button type="submit" className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground" aria-label="Kirim">
+        <button
+          type="submit"
+          className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+          aria-label="Kirim"
+        >
           <Send className="size-4" />
         </button>
       </form>
     </aside>
+  );
+}
+
+function HasilF1({ hasil }: { hasil: F1QueryResponse }) {
+  const limitations = [
+    ...(hasil.answer ? [hasil.answer.limitations] : []),
+    ...(hasil.limitations ?? []),
+  ];
+
+  return (
+    <div className="max-w-[92%] space-y-2.5">
+      {hasil.answer ? (
+        <p className="text-sm leading-6 text-foreground">{hasil.answer.summary}</p>
+      ) : (
+        <p className="text-sm leading-6 text-muted-foreground">
+          Evidence tidak cukup; ringkasan tidak diterbitkan oleh server.
+        </p>
+      )}
+
+      {hasil.evidence.length > 0 && (
+        <div className="space-y-1.5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <FileSearch className="size-3.5" /> Sumber evidence
+          </p>
+          {hasil.evidence.map((kartu) => (
+            <div
+              key={kartu.source_id}
+              className="rounded-xl border border-border px-3 py-2 text-xs"
+            >
+              <p className="font-mono font-semibold text-foreground">{kartu.source_id}</p>
+              {kartu.journal_title && (
+                <p className="mt-0.5 text-muted-foreground">{kartu.journal_title}</p>
+              )}
+              {(kartu.outcome ?? kartu.failure_mode) && (
+                <p className="mt-0.5 text-muted-foreground">
+                  {[kartu.outcome, kartu.failure_mode].filter(Boolean).join(" · ")}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {limitations.length > 0 ? (
+        limitations.map((limitation) => (
+          <p key={limitation} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+            <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+            {limitation}
+          </p>
+        ))
+      ) : (
+        <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+          Tidak ada limitation tambahan dari server.
+        </p>
+      )}
+    </div>
   );
 }
