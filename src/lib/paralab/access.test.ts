@@ -4,8 +4,8 @@ import { bolehAksesRuangKerja, tujuanSetelahMasuk } from "./access";
 describe("bolehAksesRuangKerja", () => {
   it("membatasi pengamat ke dashboard", () => {
     expect(bolehAksesRuangKerja("Pengamat", "/dashboard")).toBe(true);
+    expect(bolehAksesRuangKerja("Pengamat", "/iot")).toBe(true);
     expect(bolehAksesRuangKerja("Pengamat", "/journal/new")).toBe(false);
-    expect(bolehAksesRuangKerja("Pengamat", "/iot")).toBe(false);
   });
 
   it("memberi seluruh peran riset akses ke workspace", () => {
