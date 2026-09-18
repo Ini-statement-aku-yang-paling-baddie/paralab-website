@@ -29,7 +29,9 @@ describe("toF2Request", () => {
   });
 
   it("mengirim ph null saat nilai ph masih kosong", () => {
-    expect(toF2Request({ bahan: BATCH.bahan, hasil: [{ paramId: "ph", nilai: null }] }).ph).toBeNull();
+    expect(
+      toF2Request({ bahan: BATCH.bahan, hasil: [{ paramId: "ph", nilai: null }] }).ph,
+    ).toBeNull();
   });
 
   it("tidak memakai parameter non-ph sebagai ph", () => {

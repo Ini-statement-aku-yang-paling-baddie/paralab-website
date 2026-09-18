@@ -4,6 +4,7 @@ import {
   toF4Request,
   toF4RequestFromF3,
   toF4Checkpoint,
+  scopedValueForBatch,
   type F4Recommendation,
 } from "./f4-adapter";
 import type { F3Abstain, F3Forecast } from "./f3";
@@ -84,6 +85,21 @@ describe("toF4RequestFromF3", () => {
   });
 });
 
+describe("scopedValueForBatch", () => {
+  it("does not expose a previous batch's F3 result to F4", () => {
+    const f3ForBatchOne = { batchNomor: 1, value: FORECAST };
+
+    expect(scopedValueForBatch(f3ForBatchOne, 2)).toBeNull();
+    expect(scopedValueForBatch(f3ForBatchOne, 1)).toBe(FORECAST);
+  });
+
+  it("does not expose a previous batch's F2 or F4 state", () => {
+    const stateForBatchOne = { batchNomor: 1, value: { source: "batch one" } };
+
+    expect(scopedValueForBatch(stateForBatchOne, 2)).toBeNull();
+  });
+});
+
 describe("toF4Request", () => {
   it("hanya meneruskan F3 terstruktur dan checkpoint opsional", () => {
     expect(toF4Request({ decision: "flag_high_risk" }, null)).toEqual({
@@ -109,7 +125,9 @@ describe("toF4Checkpoint", () => {
 
   it("tidak meneruskan checkpoint yang belum dikonfirmasi", () => {
     expect(
-      toF4Checkpoint([{ minggu: 4, ph: 5.7, viskositasCp: 5800, penampilan: "hazy", dikonfirmasi: false }]),
+      toF4Checkpoint([
+        { minggu: 4, ph: 5.7, viskositasCp: 5800, penampilan: "hazy", dikonfirmasi: false },
+      ]),
     ).toBeNull();
   });
 });
@@ -132,9 +150,9 @@ describe("assertReviewableRecommendation", () => {
   });
 
   it("menolak rekomendasi yang mengklaim tidak butuh human review", () => {
-    expect(() => assertReviewableRecommendation({ ...VALID, requires_human_review: false })).toThrow(
-      /human review/i,
-    );
+    expect(() =>
+      assertReviewableRecommendation({ ...VALID, requires_human_review: false }),
+    ).toThrow(/human review/i);
   });
 
   it("menolak rekomendasi tanpa aksi yang bisa dibaca", () => {

@@ -47,7 +47,13 @@ import { NextValidationCard } from "@/components/paralab/NextValidationCard";
 import { UjiSampelStabilitas } from "@/components/paralab/UjiSampelStabilitas";
 import { BandProvenance, JejakRule } from "@/components/paralab/BandProvenance";
 import { ModelApiError, postJson } from "@/lib/paralab/api";
-import { toF4Checkpoint, toF4RequestFromF3, type F4Recommendation } from "@/lib/paralab/f4-adapter";
+import {
+  scopedValueForBatch,
+  toF4Checkpoint,
+  toF4RequestFromF3,
+  type BatchScoped,
+  type F4Recommendation,
+} from "@/lib/paralab/f4-adapter";
 import { toF2Request, type F2Screening } from "@/lib/paralab/model-adapters";
 import type { F3Hasil } from "@/lib/paralab/f3";
 import { unduhScaleUpBrief } from "@/lib/paralab/scaleup";
@@ -88,18 +94,20 @@ function JurnalDetail() {
   // Usulan sensor yang belum dikonfirmasi peneliti. Nilai di sini belum masuk jurnal.
   const [usulanSensor, setUsulanSensor] = useState<Record<string, number>>({});
   const [menganalisisAkhir, setMenganalisisAkhir] = useState(false);
-  const [f2Screening, setF2Screening] = useState<F2Screening | null>(null);
-  const [f2Loading, setF2Loading] = useState(false);
-  const [f2Error, setF2Error] = useState<string | null>(null);
-  const [f3Hasil, setF3Hasil] = useState<F3Hasil | null>(null);
-  const [f4Recommendation, setF4Recommendation] = useState<F4Recommendation | null>(null);
-  const [f4Loading, setF4Loading] = useState(false);
-  const [f4Error, setF4Error] = useState<string | null>(null);
+  const [f2Screening, setF2Screening] = useState<BatchScoped<F2Screening> | null>(null);
+  const [f2LoadingBatch, setF2LoadingBatch] = useState<number | null>(null);
+  const [f2Error, setF2Error] = useState<BatchScoped<string> | null>(null);
+  const [f3Hasil, setF3Hasil] = useState<BatchScoped<F3Hasil> | null>(null);
+  const [f4Recommendation, setF4Recommendation] = useState<BatchScoped<F4Recommendation> | null>(
+    null,
+  );
+  const [f4LoadingBatch, setF4LoadingBatch] = useState<number | null>(null);
+  const [f4Error, setF4Error] = useState<BatchScoped<string> | null>(null);
 
-  function tangkapHasilF3(hasil: F3Hasil) {
-    setF3Hasil(hasil);
-    setF4Recommendation(null);
-    setF4Error(null);
+  function tangkapHasilF3(batchNomor: number, hasil: F3Hasil) {
+    setF3Hasil({ batchNomor, value: hasil });
+    setF4Recommendation((current) => (current?.batchNomor === batchNomor ? null : current));
+    setF4Error((current) => (current?.batchNomor === batchNomor ? null : current));
   }
 
   if (!proyek) {
@@ -118,6 +126,13 @@ function JurnalDetail() {
   }
 
   const batch = proyek.batches.find((b) => b.nomor === aktif) ?? proyek.batches[0]!;
+  const f2ScreeningAktif = scopedValueForBatch(f2Screening, batch.nomor);
+  const f2ErrorAktif = scopedValueForBatch(f2Error, batch.nomor);
+  const f2Loading = f2LoadingBatch === batch.nomor;
+  const f3HasilAktif = scopedValueForBatch(f3Hasil, batch.nomor);
+  const f4RecommendationAktif = scopedValueForBatch(f4Recommendation, batch.nomor);
+  const f4ErrorAktif = scopedValueForBatch(f4Error, batch.nomor);
+  const f4Loading = f4LoadingBatch === batch.nomor;
   const nama = user?.nama ?? proyek.peneliti;
 
   const hpp = hitungHpp(batch.bahan);
@@ -191,39 +206,45 @@ function JurnalDetail() {
   }
 
   async function periksaFormulaDanRisiko() {
-    if (f2Loading) return;
-    setF2Loading(true);
+    const batchNomor = batch.nomor;
+    if (f2LoadingBatch === batchNomor) return;
+    setF2LoadingBatch(batchNomor);
     setF2Error(null);
     try {
       const screening = await postJson<F2Screening>("/v1/f2/health-check", toF2Request(batch));
-      setF2Screening(screening);
+      setF2Screening({ batchNomor, value: screening });
     } catch (cause) {
       setF2Screening(null);
-      setF2Error(
-        cause instanceof ModelApiError ? cause.message : "Gateway model tidak dapat dihubungi.",
-      );
+      setF2Error({
+        batchNomor,
+        value:
+          cause instanceof ModelApiError ? cause.message : "Gateway model tidak dapat dihubungi.",
+      });
     } finally {
-      setF2Loading(false);
+      setF2LoadingBatch((loadingBatch) => (loadingBatch === batchNomor ? null : loadingBatch));
     }
   }
 
   async function muatLangkahValidasi() {
-    if (!f3Hasil || f4Loading) return;
-    setF4Loading(true);
+    const batchNomor = batch.nomor;
+    if (!f3HasilAktif || f4LoadingBatch === batchNomor) return;
+    setF4LoadingBatch(batchNomor);
     setF4Error(null);
     try {
       const recommendation = await postJson<F4Recommendation>(
         "/v1/f4/next-validation",
-        toF4RequestFromF3(f3Hasil, toF4Checkpoint(batch.checkpoints)),
+        toF4RequestFromF3(f3HasilAktif, toF4Checkpoint(batch.checkpoints)),
       );
-      setF4Recommendation(recommendation);
+      setF4Recommendation({ batchNomor, value: recommendation });
     } catch (cause) {
       setF4Recommendation(null);
-      setF4Error(
-        cause instanceof ModelApiError ? cause.message : "Gateway model tidak dapat dihubungi.",
-      );
+      setF4Error({
+        batchNomor,
+        value:
+          cause instanceof ModelApiError ? cause.message : "Gateway model tidak dapat dihubungi.",
+      });
     } finally {
-      setF4Loading(false);
+      setF4LoadingBatch((loadingBatch) => (loadingBatch === batchNomor ? null : loadingBatch));
     }
   }
 
@@ -283,6 +304,7 @@ function JurnalDetail() {
             key={b.nomor}
             onClick={() => {
               setAktif(b.nomor);
+              setUsulanSensor({});
               navigate({
                 to: "/journal/$id",
                 params: { id: proyek.id },
@@ -571,9 +593,15 @@ function JurnalDetail() {
         </Card>
       </div>
 
-      <PanelSentinel proyek={proyek} batch={batch} peneliti={nama} onHasil={tangkapHasilF3} />
+      <PanelSentinel
+        key={batch.nomor}
+        proyek={proyek}
+        batch={batch}
+        peneliti={nama}
+        onHasil={(hasil) => tangkapHasilF3(batch.nomor, hasil)}
+      />
 
-      <FormulaScreeningCard screening={f2Screening} loading={f2Loading} error={f2Error} />
+      <FormulaScreeningCard screening={f2ScreeningAktif} loading={f2Loading} error={f2ErrorAktif} />
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <GhostButton onClick={periksaFormulaDanRisiko} disabled={f2Loading}>
           {f2Loading ? "Memeriksa formula…" : "Periksa formula (F2)"}
@@ -583,21 +611,26 @@ function JurnalDetail() {
         </span>
       </div>
 
-      {f3Hasil ? (
+      {f3HasilAktif ? (
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <GhostButton onClick={muatLangkahValidasi} disabled={f4Loading}>
             {f4Loading ? "Memuat langkah validasi…" : "Muat langkah validasi (F4)"}
           </GhostButton>
           <span className="text-xs text-muted-foreground">
-            F4 memakai hasil F3 terakhir dan checkpoint terkonfirmasi dari batch ini.
+            F4 memakai hasil F3 asli dan checkpoint terkonfirmasi dari batch ini.
           </span>
         </div>
       ) : (
         <p className="mt-5 text-xs text-muted-foreground">
-          Jalankan F3 Stability Sentinel lebih dulu. F4 memakai hasil F3 asli, bukan payload contoh.
+          Jalankan F3 Stability Sentinel untuk batch ini lebih dulu. F4 memakai hasil F3 asli, bukan
+          payload contoh.
         </p>
       )}
-      <NextValidationCard recommendation={f4Recommendation} loading={f4Loading} error={f4Error} />
+      <NextValidationCard
+        recommendation={f4RecommendationAktif}
+        loading={f4Loading}
+        error={f4ErrorAktif}
+      />
 
       <UjiSampelStabilitas proyek={proyek} batch={batch} peneliti={nama} />
 

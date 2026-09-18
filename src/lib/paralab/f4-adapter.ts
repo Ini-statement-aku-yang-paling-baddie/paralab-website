@@ -24,6 +24,13 @@ export type F4Recommendation = {
   limitations: string[];
 };
 
+/** Nilai gateway hanya dapat dipakai pada batch yang menghasilkan nilai tersebut. */
+export type BatchScoped<T> = { batchNomor: number; value: T };
+
+export function scopedValueForBatch<T>(state: BatchScoped<T> | null, batchNomor: number): T | null {
+  return state?.batchNomor === batchNomor ? state.value : null;
+}
+
 export function toF4Request(
   f3Forecast: Record<string, unknown>,
   checkpoint: Record<string, unknown> | null,

@@ -24,7 +24,13 @@ export function FormulaScreeningCard({ screening, loading, error }: Props) {
       <CardTitle
         title="Screening formula"
         sub="Guardrail deterministik dari gateway model, bukan penilaian stabilitas."
-        right={screening ? <Pill variant={statusVariant(screening.overall_status)}>{screening.overall_status}</Pill> : undefined}
+        right={
+          screening ? (
+            <Pill variant={statusVariant(screening.overall_status)}>
+              {screening.overall_status}
+            </Pill>
+          ) : undefined
+        }
       />
 
       {loading && <p className="text-sm text-muted-foreground">Menjalankan screening formula…</p>}

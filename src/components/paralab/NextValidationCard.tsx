@@ -32,12 +32,16 @@ export function NextValidationCard({ recommendation, loading, error }: Props) {
       <CardTitle
         title="Langkah validasi berikutnya"
         sub="Rekomendasi F4 dari sinyal risiko F2/F3, bukan instruksi reformulasi."
-        right={siap ? <Pill variant={priorityVariant(recommendation!.priority)}>{recommendation!.priority}</Pill> : undefined}
+        right={
+          siap ? (
+            <Pill variant={priorityVariant(recommendation!.priority)}>
+              {recommendation!.priority}
+            </Pill>
+          ) : undefined
+        }
       />
 
-      {loading && (
-        <p className="text-sm text-muted-foreground">Menyiapkan langkah validasi…</p>
-      )}
+      {loading && <p className="text-sm text-muted-foreground">Menyiapkan langkah validasi…</p>}
 
       {!loading && failure && (
         <p className="flex items-center gap-2 text-sm font-medium text-danger">
@@ -54,7 +58,9 @@ export function NextValidationCard({ recommendation, loading, error }: Props) {
 
       {siap && (
         <div className="space-y-4">
-          <p className="text-sm font-semibold text-foreground">{recommendation!.recommended_action}</p>
+          <p className="text-sm font-semibold text-foreground">
+            {recommendation!.recommended_action}
+          </p>
 
           {recommendation!.required_inputs.length > 0 && (
             <div>
