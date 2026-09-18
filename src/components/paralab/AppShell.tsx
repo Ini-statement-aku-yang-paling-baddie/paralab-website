@@ -36,14 +36,29 @@ export function Logo({ compact = false, light = false }: { compact?: boolean; li
       <span className="inline-flex size-12 items-center justify-center rounded-sm bg-primary">
         <img src={markLight} alt="" className="h-9 w-auto object-contain" />
       </span>
-      <span className={"font-display text-xl font-semibold " + (light ? "text-primary-foreground" : "text-foreground")}>
+      <span
+        className={
+          "font-display text-xl font-semibold " +
+          (light ? "text-primary-foreground" : "text-foreground")
+        }
+      >
         paralab<span className={light ? "text-primary-foreground/70" : "text-brand"}>.ai</span>
       </span>
     </span>
   );
 }
 
-export function AppShell({ children, judul, deskripsi, aksi }: { children: ReactNode; judul: string; deskripsi?: string; aksi?: ReactNode }) {
+export function AppShell({
+  children,
+  judul,
+  deskripsi,
+  aksi,
+}: {
+  children: ReactNode;
+  judul: string;
+  deskripsi?: string;
+  aksi?: ReactNode;
+}) {
   const state = useAppState();
   const navigate = useNavigate();
   const [siap, setSiap] = useState(false);
@@ -106,12 +121,14 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
             <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
               <Activity className="size-3.5 text-success" /> Sensor lab aktif
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">22 kanal terhubung, data diperbarui tiap 2 detik.</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              22 kanal terhubung, data diperbarui tiap 2 detik.
+            </p>
           </div>
           {state.user && (
             <button
               onClick={keluar}
-               className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               <LogOut className="size-4" /> Keluar
             </button>
@@ -123,24 +140,26 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
         <header className="header-deep sticky top-0 z-20 px-5 py-4 lg:px-8">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap sm:justify-between">
             <div className="min-w-0">
-              <h1 className="truncate font-display text-xl font-semibold text-primary-foreground lg:text-2xl">{judul}</h1>
+              <h1 className="truncate font-display text-xl font-semibold text-primary-foreground lg:text-2xl">
+                {judul}
+              </h1>
               {deskripsi && <p className="mt-0.5 text-sm text-white/70">{deskripsi}</p>}
             </div>
             <div className="flex items-center gap-3">
               {aksi}
-               <div className="flex items-center gap-2 rounded-md border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5">
-                 <span className="flex size-7 items-center justify-center rounded-sm bg-primary-foreground/20 text-xs font-bold text-primary-foreground">
-                   {state.user.nama.slice(0, 1)}
-                 </span>
-                 <span className="text-sm font-medium text-white">{state.user.nama}</span>
-               </div>
-               <button
-                 type="button"
-                 onClick={keluar}
-                 className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white"
-               >
-                 <LogOut className="size-3.5" /> Keluar
-               </button>
+              <div className="flex items-center gap-2 rounded-md border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5">
+                <span className="flex size-7 items-center justify-center rounded-sm bg-primary-foreground/20 text-xs font-bold text-primary-foreground">
+                  {state.user.nama.slice(0, 1)}
+                </span>
+                <span className="text-sm font-medium text-white">{state.user.nama}</span>
+              </div>
+              <button
+                type="button"
+                onClick={keluar}
+                className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white"
+              >
+                <LogOut className="size-3.5" /> Keluar
+              </button>
             </div>
           </div>
           <nav className="mt-3 flex gap-1 overflow-x-auto lg:hidden">

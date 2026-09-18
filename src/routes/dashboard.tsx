@@ -95,8 +95,8 @@ export function DashboardPage() {
         <div className="mb-4 border-l-2 border-brand bg-brand-soft/50 p-3 text-sm text-foreground">
           <p className="font-semibold">Mode contoh, lihat saja</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Dashboard dan pemantauan lab dapat ditinjau, tetapi jurnal dan data penelitian tidak tersedia
-            untuk tamu.
+            Dashboard dan pemantauan lab dapat ditinjau, tetapi jurnal dan data penelitian tidak
+            tersedia untuk tamu.
           </p>
         </div>
       )}

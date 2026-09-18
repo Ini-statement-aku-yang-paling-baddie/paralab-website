@@ -10,7 +10,12 @@ const state = vi.hoisted(() => ({
 
 vi.mock("@tanstack/react-router", () => ({
   createFileRoute: () => () => ({}),
-  Link: ({ children, to: _to, params: _params, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { to: string; params?: object }) => (
+  Link: ({
+    children,
+    to: _to,
+    params: _params,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { to: string; params?: object }) => (
     <a {...props}>{children}</a>
   ),
 }));
@@ -26,7 +31,12 @@ vi.mock("recharts", () => ({
 }));
 
 vi.mock("@/components/paralab/AppShell", () => ({
-  AppShell: ({ children, aksi }: { children: React.ReactNode; aksi?: React.ReactNode }) => <main>{aksi}{children}</main>,
+  AppShell: ({ children, aksi }: { children: React.ReactNode; aksi?: React.ReactNode }) => (
+    <main>
+      {aksi}
+      {children}
+    </main>
+  ),
 }));
 
 vi.mock("@/lib/paralab/store", () => ({

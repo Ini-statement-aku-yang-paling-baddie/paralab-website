@@ -21,7 +21,8 @@ export const Route = createFileRoute("/login")({
       { property: "og:title", content: "Akses Ruang Kerja | paralab.ai" },
       {
         property: "og:description",
-        content: "Akses dashboard riset, monitoring sensor laboratorium, dan jurnal praktikum elektronik.",
+        content:
+          "Akses dashboard riset, monitoring sensor laboratorium, dan jurnal praktikum elektronik.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -85,7 +86,9 @@ export function LoginPage({ next }: { next?: string | undefined }) {
           >
             Kembali ke beranda
           </button>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">Akses ruang kerja</h1>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
+            Akses ruang kerja
+          </h1>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             Pilih profil kerja untuk prototipe ini. Kata sandi dummy dipakai hanya untuk memberi
             pengalaman masuk yang realistis dan belum memverifikasi akun.
@@ -112,7 +115,11 @@ export function LoginPage({ next }: { next?: string | undefined }) {
               }}
             >
               <Field label="Nama peneliti">
-                <select className={inputClass} value={nama} onChange={(event) => setNama(event.target.value)}>
+                <select
+                  className={inputClass}
+                  value={nama}
+                  onChange={(event) => setNama(event.target.value)}
+                >
                   {RESEARCHERS.map((researcher) => (
                     <option key={researcher} value={researcher}>
                       {researcher}
@@ -121,14 +128,21 @@ export function LoginPage({ next }: { next?: string | undefined }) {
                 </select>
               </Field>
               <Field label="Peran">
-                <select className={inputClass} value={peran} onChange={(event) => setPeran(event.target.value)}>
-                  {["RnD Formulator", "Team Lead RnD", "Analis Laboratorium", "Regulatory Specialist"].map(
-                    (role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ),
-                  )}
+                <select
+                  className={inputClass}
+                  value={peran}
+                  onChange={(event) => setPeran(event.target.value)}
+                >
+                  {[
+                    "RnD Formulator",
+                    "Team Lead RnD",
+                    "Analis Laboratorium",
+                    "Regulatory Specialist",
+                  ].map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
                 </select>
               </Field>
               <Field label="Kata sandi" hint="Dummy untuk prototipe, masukkan nilai apa pun.">
