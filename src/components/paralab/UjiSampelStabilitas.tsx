@@ -24,6 +24,7 @@ import {
 import type { Batch, CitraStabilitasEntry, Project } from "@/lib/paralab/data";
 import { actions } from "@/lib/paralab/store";
 import { jadwalFotoDroplet } from "@/lib/paralab/pemantauan";
+import { buatCitraManual } from "@/lib/paralab/timeframe";
 import { analisaPiksel } from "@/lib/paralab/prediksi";
 import { BATAS_CV } from "@/lib/paralab/kontrak";
 import { BandProvenance, DaftarBatas } from "./BandProvenance";
@@ -40,6 +41,13 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
   const [dimulaiManual, setDimulaiManual] = useState(false);
   const [memproses, setMemproses] = useState(false);
   const [menganalisis, setMenganalisis] = useState(false);
+  const [inputManual, setInputManual] = useState({
+    homogenitas: "",
+    estimasiDroplet: "",
+    indeksPolidispersi: "",
+    skorPemisahan: "",
+    kesimpulan: "",
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const jadwal = jadwalFotoDroplet(batch, Date.now());
   const entri = [...(batch.citraStabilitas ?? [])].sort((a, b) => a.hari - b.hari);
@@ -136,6 +144,46 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
       setMemproses(false);
     };
     img.src = url;
+  }
+
+  function simpanPengamatanManual() {
+    const angka = [
+      Number(inputManual.homogenitas),
+      Number(inputManual.estimasiDroplet),
+      Number(inputManual.indeksPolidispersi),
+      Number(inputManual.skorPemisahan),
+    ];
+    if (!inputManual.kesimpulan.trim() || angka.some((nilai) => !Number.isFinite(nilai))) return;
+
+    const entry = buatCitraManual({
+      hari,
+      waktu: new Date().toISOString(),
+      homogenitas: angka[0]!,
+      estimasiDroplet: angka[1]!,
+      indeksPolidispersi: angka[2]!,
+      skorPemisahan: angka[3]!,
+      kesimpulan: inputManual.kesimpulan.trim(),
+    });
+    setDimulaiManual(true);
+    actions.simpanBatch(proyek.id, batch.nomor, (b) => ({
+      ...b,
+      status: "pemantauan",
+      ujiSampelDimulai: b.ujiSampelDimulai ?? new Date().toISOString(),
+      citraStabilitas: [...(b.citraStabilitas ?? []).filter((e) => e.hari !== hari), entry],
+    }));
+    actions.catat(
+      peneliti,
+      proyek.judul,
+      "Pengamatan manual",
+      "Data timeframe hari ke " + hari + " diinput manual untuk batch " + batch.nomor,
+    );
+    setInputManual({
+      homogenitas: "",
+      estimasiDroplet: "",
+      indeksPolidispersi: "",
+      skorPemisahan: "",
+      kesimpulan: "",
+    });
   }
 
   function jalankanPrediksi() {
@@ -309,6 +357,43 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
                 e.target.value = "";
               }}
             />
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-sm font-bold text-foreground">Atau input data pengamatan manual</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Gunakan opsi ini bila tidak ada foto. Semua metrik harus dicatat oleh peneliti.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[
+                  ["homogenitas", "Homogenitas (%)"],
+                  ["estimasiDroplet", "D50 droplet (µm)"],
+                  ["indeksPolidispersi", "Indeks polidispersi"],
+                  ["skorPemisahan", "Skor pemisahan (0-100)"],
+                ].map(([key, label]) => (
+                  <label key={key} className="text-xs font-semibold text-muted-foreground">
+                    {label}
+                    <input
+                      type="number"
+                      step="any"
+                      value={inputManual[key as keyof typeof inputManual]}
+                      onChange={(e) => setInputManual((v) => ({ ...v, [key]: e.target.value }))}
+                      className="mt-1 w-full rounded-lg border border-input bg-card px-2 py-1.5 text-sm text-foreground"
+                    />
+                  </label>
+                ))}
+              </div>
+              <label className="mt-2 block text-xs font-semibold text-muted-foreground">
+                Kesimpulan pengamatan
+                <textarea
+                  rows={2}
+                  value={inputManual.kesimpulan}
+                  onChange={(e) => setInputManual((v) => ({ ...v, kesimpulan: e.target.value }))}
+                  className="mt-1 w-full rounded-lg border border-input bg-card px-2 py-1.5 text-sm text-foreground"
+                />
+              </label>
+              <PrimaryButton className="mt-3" onClick={simpanPengamatanManual}>
+                Simpan data manual hari ke {hari}
+              </PrimaryButton>
+            </div>
             {berikutnya && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Titik berikutnya yang belum lengkap: hari ke {berikutnya.hari},{" "}
@@ -362,7 +447,7 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
                 <p className="text-sm font-bold text-foreground">
                   Distribusi droplet citra terakhir
                 </p>
-                {terakhir && (
+                {terakhir?.gambar && (
                   <div className="mt-3 grid gap-3 sm:grid-cols-[8rem_1fr]">
                     <img
                       src={terakhir.gambar}

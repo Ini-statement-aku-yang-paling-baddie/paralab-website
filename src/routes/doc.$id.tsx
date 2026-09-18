@@ -27,6 +27,7 @@ import { buatDokumenHtml, hitungKata } from "@/lib/paralab/dokumen";
 import { actions, hydrate, useAppState, useProject } from "@/lib/paralab/store";
 import { bacaSatuSensor } from "@/hooks/use-sensors";
 import type { GambarSpesimen } from "@/lib/paralab/data";
+import { bolehMulaiTimeframe } from "@/lib/paralab/timeframe";
 import { Bot, CheckCircle2, ClipboardList } from "lucide-react";
 
 type Search = { batch?: number | undefined };
@@ -377,7 +378,8 @@ function DokumenEditor() {
             </h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Simpan kondisi spesimen dan feedback peneliti sebelum menjalankan uji timeframe sampel.
+            Catatan kondisi spesimen awal bersifat opsional. Jika belum ada gambar, peneliti wajib
+            menginput data pengamatan secara manual pada setiap titik timeframe.
           </p>
 
           <SpesimenAkhir value={spesimen} onChange={setSpesimen} />
@@ -399,7 +401,7 @@ function DokumenEditor() {
 
           <button
             onClick={mulaiTimeframe}
-            disabled={!feedback.trim() || !spesimen}
+            disabled={!bolehMulaiTimeframe(feedback)}
             className="mt-3 flex items-center gap-2 rounded-xl brand-gradient px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm"
           >
             <CheckCircle2 className="size-4" /> Uji timeframe sampel

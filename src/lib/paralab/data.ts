@@ -49,8 +49,9 @@ export type CitraStabilitasEntry = {
   id: string;
   hari: number;
   waktu: string;
-  namaFile: string;
-  gambar: string;
+  sumber?: "citra" | "manual" | undefined;
+  namaFile?: string | undefined;
+  gambar?: string | undefined;
   homogenitas: number;
   estimasiDroplet: number;
   indeksPolidispersi: number;
