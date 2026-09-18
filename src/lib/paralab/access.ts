@@ -1,10 +1,11 @@
 /**
  * Kebijakan akses prototipe dibuat kecil dan eksplisit agar jalur tamu mudah
- * dipahami. Peran riset memiliki akses workspace yang sama sampai ada backend
- * autentikasi dan otorisasi nyata.
+ * dipahami. Pengamat dapat melihat dashboard dan monitoring lab; peran riset
+ * memiliki akses workspace penuh sampai ada otorisasi backend nyata.
  */
 export function bolehAksesRuangKerja(peran: string | undefined, path: string): boolean {
-  return peran !== "Pengamat" || path === "/dashboard";
+  if (peran !== "Pengamat") return true;
+  return path === "/dashboard" || path === "/iot";
 }
 
 /** Mencegah redirect login mengarah ke URL eksternal atau kembali ke login. */

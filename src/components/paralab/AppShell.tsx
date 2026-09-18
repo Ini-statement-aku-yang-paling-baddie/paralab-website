@@ -1,4 +1,4 @@
-import { Link, Navigate, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Activity,
@@ -45,6 +45,7 @@ export function Logo({ compact = false, light = false }: { compact?: boolean; li
 
 export function AppShell({ children, judul, deskripsi, aksi }: { children: ReactNode; judul: string; deskripsi?: string; aksi?: ReactNode }) {
   const state = useAppState();
+  const navigate = useNavigate();
   const [siap, setSiap] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -66,6 +67,11 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
 
   if (!bolehAksesRuangKerja(state.user.peran, pathname)) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  function keluar() {
+    navigate({ to: "/" });
+    actions.logout();
   }
 
   return (
@@ -104,7 +110,7 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
           </div>
           {state.user && (
             <button
-              onClick={() => actions.logout()}
+              onClick={keluar}
                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               <LogOut className="size-4" /> Keluar
@@ -130,7 +136,7 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
                </div>
                <button
                  type="button"
-                 onClick={() => actions.logout()}
+                 onClick={keluar}
                  className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white"
                >
                  <LogOut className="size-3.5" /> Keluar

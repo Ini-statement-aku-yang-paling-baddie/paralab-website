@@ -52,7 +52,7 @@ function capaian(p: Project, nomor: number) {
   return Math.round((lolos / p.targets.length) * 100);
 }
 
-function DashboardPage() {
+export function DashboardPage() {
   const { projects, user } = useAppState();
   const tamuDemo = user?.peran === "Pengamat";
 
@@ -95,8 +95,8 @@ function DashboardPage() {
         <div className="mb-4 border-l-2 border-brand bg-brand-soft/50 p-3 text-sm text-foreground">
           <p className="font-semibold">Mode contoh, lihat saja</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Dashboard dapat ditinjau, tetapi jurnal, data penelitian, dan alat laboratorium tidak
-            tersedia untuk tamu.
+            Dashboard dan pemantauan lab dapat ditinjau, tetapi jurnal dan data penelitian tidak tersedia
+            untuk tamu.
           </p>
         </div>
       )}
@@ -229,7 +229,6 @@ function DashboardPage() {
                 <th className="px-4 py-3">Batch aktif</th>
                 <th className="px-4 py-3">Capaian</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -239,13 +238,17 @@ function DashboardPage() {
                 return (
                   <tr key={p.id} className="hover:bg-secondary/60">
                     <td className="max-w-sm px-4 py-3">
-                      <Link
-                        to="/journal/$id"
-                        params={{ id: p.id }}
-                        className="font-semibold text-foreground hover:text-brand"
-                      >
-                        {p.judul}
-                      </Link>
+                      {tamuDemo ? (
+                        <span className="font-semibold text-foreground">{p.judul}</span>
+                      ) : (
+                        <Link
+                          to="/journal/$id"
+                          params={{ id: p.id }}
+                          className="font-semibold text-foreground hover:text-brand"
+                        >
+                          {p.judul}
+                        </Link>
+                      )}
                       <p className="mt-1 truncate text-xs text-muted-foreground">{p.tim}</p>
                     </td>
                     <td className="px-4 py-3">
@@ -283,15 +286,6 @@ function DashboardPage() {
                         <i className={`size-2 ${statusClass(p.status).split(" ")[0]}`} />
                         {p.status}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        to="/journal/$id"
-                        params={{ id: p.id }}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
-                      >
-                        Buka <ArrowRight className="size-3" />
-                      </Link>
                     </td>
                   </tr>
                 );

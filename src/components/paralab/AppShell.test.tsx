@@ -1,22 +1,25 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AppShell } from "./AppShell";
 
 const mocks = vi.hoisted(() => ({
   hydrate: vi.fn(),
   state: { user: null as { nama: string; peran: string } | null },
   pathname: "/dashboard",
+  navigate: vi.fn(),
+  logout: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
   Navigate: () => <p>Dialihkan ke akses ruang kerja</p>,
+  useNavigate: () => mocks.navigate,
   useRouterState: () => mocks.pathname,
 }));
 
 vi.mock("@/lib/paralab/store", () => ({
-  actions: { logout: vi.fn() },
+  actions: { logout: mocks.logout },
   hydrate: mocks.hydrate,
   useAppState: () => mocks.state,
 }));
@@ -24,6 +27,8 @@ vi.mock("@/lib/paralab/store", () => ({
 afterEach(() => {
   cleanup();
   mocks.hydrate.mockReset();
+  mocks.navigate.mockReset();
+  mocks.logout.mockReset();
   mocks.state.user = null;
   mocks.pathname = "/dashboard";
 });
@@ -45,11 +50,14 @@ describe("AppShell", () => {
     expect(screen.queryByText("Konten jurnal")).toBeNull();
   });
 
-  it("menampilkan ruang kerja setelah profil dipilih", async () => {
+  it("mengembalikan pengguna ke beranda saat keluar", async () => {
     mocks.state.user = { nama: "Dina Aprilia", peran: "RnD Formulator" };
     render(<AppShell judul="Dashboard">Konten ruang kerja</AppShell>);
 
     await waitFor(() => expect(screen.getByText("Konten ruang kerja")).toBeTruthy());
-    expect(screen.getByText("Dina Aprilia")).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: /keluar/i })[0]!);
+
+    expect(mocks.navigate).toHaveBeenCalledWith({ to: "/" });
+    expect(mocks.logout).toHaveBeenCalledTimes(1);
   });
 });
