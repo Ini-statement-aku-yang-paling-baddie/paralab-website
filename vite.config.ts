@@ -8,8 +8,9 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   nitro: {
-    // PWS runs a long-lived Node HTTP process, unlike Cloudflare's module runtime.
-    preset: "node-server",
+    // Emit Vercel Build Output locally and in CI, instead of relying on host
+    // auto-detection or the previous PWS Node-server preset.
+    preset: "vercel",
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
