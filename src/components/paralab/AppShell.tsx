@@ -11,6 +11,7 @@ import {
   Send,
 } from "lucide-react";
 import { actions, hydrate, useAppState } from "@/lib/paralab/store";
+import { bolehAksesRuangKerja } from "@/lib/paralab/access";
 import markLight from "@/assets/paralab-mark-light.png";
 
 const NAV = [
@@ -53,17 +54,17 @@ export function AppShell({ children, judul, deskripsi, aksi }: { children: React
   }, []);
 
   const tamuDemo = state.user?.peran === "Pengamat";
-  const navigasi = tamuDemo ? NAV.filter((item) => item.to === "/dashboard") : NAV;
+  const navigasi = NAV.filter((item) => bolehAksesRuangKerja(state.user?.peran, item.to));
 
   if (!siap) {
     return <div className="min-h-screen bg-background" aria-label="Memuat ruang kerja" />;
   }
 
   if (!state.user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" search={{ next: pathname }} replace />;
   }
 
-  if (tamuDemo && pathname !== "/dashboard") {
+  if (!bolehAksesRuangKerja(state.user.peran, pathname)) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -42,11 +42,11 @@ describe("LoginPage", () => {
     expect(navigate).toHaveBeenCalledWith({ to: "/dashboard" });
   });
 
-  it("masuk sebagai peneliti dengan profil yang dipilih", () => {
-    render(<LoginPage />);
+  it("mengembalikan peneliti ke halaman yang sebelumnya diminta", () => {
+    render(<LoginPage next="/journal/new" />);
     fireEvent.click(screen.getByRole("button", { name: /lanjut sebagai peneliti/i }));
 
     expect(login).toHaveBeenCalledWith("Samuel Kevin", "RnD Formulator");
-    expect(navigate).toHaveBeenCalledWith({ to: "/dashboard" });
+    expect(navigate).toHaveBeenCalledWith({ to: "/journal/new" });
   });
 });

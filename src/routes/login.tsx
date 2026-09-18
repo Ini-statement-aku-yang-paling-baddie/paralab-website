@@ -5,6 +5,9 @@ import { Logo } from "@/components/paralab/AppShell";
 import { Field, GhostButton, PrimaryButton, inputClass } from "@/components/paralab/ui";
 import { RESEARCHERS } from "@/lib/paralab/data";
 import { actions } from "@/lib/paralab/store";
+import { tujuanSetelahMasuk } from "@/lib/paralab/access";
+
+type LoginSearch = { next?: string };
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -24,17 +27,26 @@ export const Route = createFileRoute("/login")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: LoginPage,
+  validateSearch: (search: Record<string, unknown>): LoginSearch => {
+    const next = search["next"];
+    return typeof next === "string" ? { next } : {};
+  },
+  component: LoginRoutePage,
 });
 
-export function LoginPage() {
+function LoginRoutePage() {
+  const { next } = Route.useSearch();
+  return <LoginPage next={next} />;
+}
+
+export function LoginPage({ next }: { next?: string | undefined }) {
   const navigate = useNavigate();
   const [nama, setNama] = useState(RESEARCHERS[0]!);
   const [peran, setPeran] = useState("RnD Formulator");
 
   function masukSebagaiPeneliti() {
     actions.login(nama, peran);
-    navigate({ to: "/dashboard" });
+    navigate({ to: tujuanSetelahMasuk(next) as never });
   }
 
   function bukaContoh() {
