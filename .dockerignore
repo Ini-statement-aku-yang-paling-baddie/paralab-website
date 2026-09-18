@@ -1,0 +1,17 @@
+.git
+.gitignore
+node_modules
+.output
+dist
+dist-ssr
+.vinxi
+.tanstack
+.nitro
+.env
+.env.*
+!.env.example
+*.log
+coverage
+.vscode
+.idea
+.DS_Store
