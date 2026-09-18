@@ -10,7 +10,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { BrainCircuit, Camera, CheckCircle2, ImagePlus, Loader2, Microscope, PlayCircle, Trash2, UserCheck } from "lucide-react";
+import {
+  BrainCircuit,
+  Camera,
+  CheckCircle2,
+  ImagePlus,
+  Loader2,
+  Microscope,
+  PlayCircle,
+  Trash2,
+  UserCheck,
+} from "lucide-react";
 import type { Batch, CitraStabilitasEntry, Project } from "@/lib/paralab/data";
 import { actions } from "@/lib/paralab/store";
 import { jadwalFotoDroplet } from "@/lib/paralab/pemantauan";
@@ -46,7 +56,12 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
       status: "pemantauan",
       ujiSampelDimulai: b.ujiSampelDimulai ?? new Date().toISOString(),
     }));
-    actions.catat(peneliti, proyek.judul, "Uji coba sampel", "Pemantauan stabilitas droplet batch " + batch.nomor + " dimulai");
+    actions.catat(
+      peneliti,
+      proyek.judul,
+      "Uji coba sampel",
+      "Pemantauan stabilitas droplet batch " + batch.nomor + " dimulai",
+    );
   }
 
   function hapus(id: string) {
@@ -107,7 +122,12 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
           citra.skorPemisahan +
           " dari 100.",
       }));
-      actions.catat(peneliti, proyek.judul, "Foto droplet", "Citra stabilitas hari ke " + hari + " dianalisis untuk batch " + batch.nomor);
+      actions.catat(
+        peneliti,
+        proyek.judul,
+        "Foto droplet",
+        "Citra stabilitas hari ke " + hari + " dianalisis untuk batch " + batch.nomor,
+      );
       URL.revokeObjectURL(url);
       setMemproses(false);
     };
@@ -122,17 +142,29 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
     if (!terakhir) return;
     setMenganalisis(true);
     window.setTimeout(() => {
-      const bahanAktif = batch.bahan.filter((b) => ["Vitamin", "Retinoid", "Asam Eksfolian", "Peptida", "Antioksidan"].includes(b.golongan));
-      const risikoPecah = Math.min(96, Math.max(4, Math.round(terakhir.skorPemisahan * 0.72 + terakhir.indeksPolidispersi * 16)));
-      const risikoWarna = Math.min(94, Math.max(5, Math.round(100 - terakhir.homogenitas + bahanAktif.length * 4)));
+      const bahanAktif = batch.bahan.filter((b) =>
+        ["Vitamin", "Retinoid", "Asam Eksfolian", "Peptida", "Antioksidan"].includes(b.golongan),
+      );
+      const risikoPecah = Math.min(
+        96,
+        Math.max(4, Math.round(terakhir.skorPemisahan * 0.72 + terakhir.indeksPolidispersi * 16)),
+      );
+      const risikoWarna = Math.min(
+        94,
+        Math.max(5, Math.round(100 - terakhir.homogenitas + bahanAktif.length * 4)),
+      );
       const risikoInteraksi = Math.min(92, 8 + bahanAktif.length * 9);
-      const shelfLife = Math.max(3, Math.min(36, Math.round(30 - (risikoPecah + risikoWarna + risikoInteraksi) / 10)));
+      const shelfLife = Math.max(
+        3,
+        Math.min(36, Math.round(30 - (risikoPecah + risikoWarna + risikoInteraksi) / 10)),
+      );
       const minggu = Math.max(0, Math.round(hari / 7));
       const checkpoint = {
         minggu,
         ph: Number((5.4 - risikoWarna / 500).toFixed(2)),
         viskositasCp: Math.max(800, Math.round(6400 * (1 - risikoPecah / 180))),
-        penampilan: risikoPecah >= 55 ? "phase_separation" : risikoWarna >= 45 ? "color_shift" : "uniform",
+        penampilan:
+          risikoPecah >= 55 ? "phase_separation" : risikoWarna >= 45 ? "color_shift" : "uniform",
         sumber: "sensor" as const,
         dikonfirmasi: false,
         waktu: new Date().toISOString(),
@@ -145,16 +177,32 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
           risikoPecah,
           risikoPerubahanWarna: risikoWarna,
           risikoInteraksiAktif: risikoInteraksi,
-          ringkasan: risikoPecah >= 55 ? "Emulsi menunjukkan risiko pemisahan fase dan memerlukan optimasi sistem emulsifier." : "Struktur emulsi diproyeksikan bertahan, dengan pemantauan warna dan viskositas tetap diperlukan.",
+          ringkasan:
+            risikoPecah >= 55
+              ? "Emulsi menunjukkan risiko pemisahan fase dan memerlukan optimasi sistem emulsifier."
+              : "Struktur emulsi diproyeksikan bertahan, dengan pemantauan warna dan viskositas tetap diperlukan.",
           mitigasi: [
             "Konfirmasi pH dan viskositas pada setiap titik waktu sebelum keputusan batch.",
-            risikoPecah >= 40 ? "Evaluasi rasio emulsifier, energi homogenisasi, dan urutan pendinginan." : "Pertahankan rasio emulsifier dan profil pendinginan batch ini.",
-            risikoWarna >= 35 ? "Kurangi paparan cahaya dan oksigen, lalu evaluasi antioksidan serta kelator." : "Pantau ΔE dan kondisi kemasan selama studi dipercepat.",
+            risikoPecah >= 40
+              ? "Evaluasi rasio emulsifier, energi homogenisasi, dan urutan pendinginan."
+              : "Pertahankan rasio emulsifier dan profil pendinginan batch ini.",
+            risikoWarna >= 35
+              ? "Kurangi paparan cahaya dan oksigen, lalu evaluasi antioksidan serta kelator."
+              : "Pantau ΔE dan kondisi kemasan selama studi dipercepat.",
           ],
         },
         checkpoints: [...(b.checkpoints ?? []).filter((c) => c.minggu !== minggu), checkpoint],
       }));
-      actions.catat(peneliti, proyek.judul, "Prediksi stabilitas", "Prediksi timeframe batch " + batch.nomor + " dibuat dan checkpoint minggu ke-" + minggu + " diusulkan");
+      actions.catat(
+        peneliti,
+        proyek.judul,
+        "Prediksi stabilitas",
+        "Prediksi timeframe batch " +
+          batch.nomor +
+          " dibuat dan checkpoint minggu ke-" +
+          minggu +
+          " diusulkan",
+      );
       setMenganalisis(false);
     }, 1800);
   }
@@ -162,7 +210,9 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
   function konfirmasiCheckpoint(minggu: number) {
     actions.simpanBatch(proyek.id, batch.nomor, (b) => ({
       ...b,
-      checkpoints: (b.checkpoints ?? []).map((c) => c.minggu === minggu ? { ...c, dikonfirmasi: true, dikonfirmasiOleh: peneliti } : c),
+      checkpoints: (b.checkpoints ?? []).map((c) =>
+        c.minggu === minggu ? { ...c, dikonfirmasi: true, dikonfirmasiOleh: peneliti } : c,
+      ),
     }));
   }
 
@@ -171,7 +221,9 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
       <CardTitle
         title="Uji timeframe dan prediktif stabilitas"
         sub="Satu alur untuk gambar sampel, simulasi shelf life, interaksi bahan aktif, risiko emulsi, perubahan warna, dan checkpoint."
-        right={<Pill variant={aktif ? "brand" : "netral"}>{aktif ? "berjalan" : "belum dimulai"}</Pill>}
+        right={
+          <Pill variant={aktif ? "brand" : "netral"}>{aktif ? "berjalan" : "belum dimulai"}</Pill>
+        }
       />
 
       <BandProvenance
@@ -185,7 +237,8 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
             <Microscope className="size-4 text-brand" /> Mulai setelah sampel batch siap dipantau
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sistem akan membuat jadwal foto hari 0, 3, 6, 9, 12, 15, 18, dan 21. Setiap foto akan menghasilkan grafik tren droplet, homogenitas, dan indikasi pemisahan fase.
+            Sistem akan membuat jadwal foto hari 0, 3, 6, 9, 12, 15, 18, dan 21. Setiap foto akan
+            menghasilkan grafik tren droplet, homogenitas, dan indikasi pemisahan fase.
           </p>
           <PrimaryButton className="mt-3" onClick={mulai}>
             <PlayCircle className="size-4" /> Mulai proses uji coba sampel
@@ -214,10 +267,17 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
                   }
                 >
                   <p className="flex items-center gap-1.5 font-bold">
-                    {terekam ? <CheckCircle2 className="size-3.5" /> : <Camera className="size-3.5" />} Hari ke {t.hari}
+                    {terekam ? (
+                      <CheckCircle2 className="size-3.5" />
+                    ) : (
+                      <Camera className="size-3.5" />
+                    )}{" "}
+                    Hari ke {t.hari}
                   </p>
                   <p className="mt-0.5">{t.tanggal}</p>
-                  <p className="mt-1">{terekam ? "foto terekam" : due ? "perlu input foto" : "menunggu jadwal"}</p>
+                  <p className="mt-1">
+                    {terekam ? "foto terekam" : due ? "perlu input foto" : "menunggu jadwal"}
+                  </p>
                 </button>
               );
             })}
@@ -226,9 +286,12 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
           <div className="rounded-xl border border-border bg-secondary/60 p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-foreground">Input foto droplet hari ke {hari}</p>
+                <p className="text-sm font-bold text-foreground">
+                  Input foto droplet hari ke {hari}
+                </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Gunakan foto mikroskop perbesaran 400 kali dari sampel stabilitas. Satu hari pengamatan menyimpan satu citra terakhir.
+                  Gunakan foto mikroskop perbesaran 400 kali dari sampel stabilitas. Satu hari
+                  pengamatan menyimpan satu citra terakhir.
                 </p>
               </div>
               <GhostButton onClick={() => fileRef.current?.click()}>
@@ -248,7 +311,8 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
             />
             {berikutnya && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Titik berikutnya yang belum lengkap: hari ke {berikutnya.hari}, {berikutnya.instruksi}.
+                Titik berikutnya yang belum lengkap: hari ke {berikutnya.hari},{" "}
+                {berikutnya.instruksi}.
               </p>
             )}
           </div>
@@ -261,22 +325,50 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={entri} margin={{ left: -18 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                      <XAxis dataKey="hari" tick={{ fontSize: 10 }} label={{ value: "Hari", position: "insideBottom", offset: -4 }} />
+                      <XAxis
+                        dataKey="hari"
+                        tick={{ fontSize: 10 }}
+                        label={{ value: "Hari", position: "insideBottom", offset: -4 }}
+                      />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip />
-                      <Line type="monotone" dataKey="estimasiDroplet" name="D50 prediksi" stroke="var(--chart-1)" strokeWidth={2} />
-                      <Line type="monotone" dataKey="homogenitas" name="Homogenitas" stroke="var(--chart-3)" strokeWidth={2} />
-                      <Line type="monotone" dataKey="skorPemisahan" name="Pemisahan" stroke="var(--chart-5)" strokeWidth={2} />
+                      <Line
+                        type="monotone"
+                        dataKey="estimasiDroplet"
+                        name="D50 prediksi"
+                        stroke="var(--chart-1)"
+                        strokeWidth={2}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="homogenitas"
+                        name="Homogenitas"
+                        stroke="var(--chart-3)"
+                        strokeWidth={2}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="skorPemisahan"
+                        name="Pemisahan"
+                        stroke="var(--chart-5)"
+                        strokeWidth={2}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               <div className="rounded-xl border border-border p-4">
-                <p className="text-sm font-bold text-foreground">Distribusi droplet citra terakhir</p>
+                <p className="text-sm font-bold text-foreground">
+                  Distribusi droplet citra terakhir
+                </p>
                 {terakhir && (
                   <div className="mt-3 grid gap-3 sm:grid-cols-[8rem_1fr]">
-                    <img src={terakhir.gambar} alt={"Foto droplet hari ke " + terakhir.hari} className="h-32 w-full rounded-lg border border-border object-cover" />
+                    <img
+                      src={terakhir.gambar}
+                      alt={"Foto droplet hari ke " + terakhir.hari}
+                      className="h-32 w-full rounded-lg border border-border object-cover"
+                    />
                     <div className="h-32">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={terakhir.distribusi} margin={{ left: -18 }}>
@@ -284,7 +376,13 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
                           <XAxis dataKey="ukuran" tick={{ fontSize: 9 }} />
                           <YAxis tick={{ fontSize: 9 }} />
                           <Tooltip />
-                          <Area type="monotone" dataKey="volume" stroke="var(--chart-1)" fill="var(--chart-1)" fillOpacity={0.3} />
+                          <Area
+                            type="monotone"
+                            dataKey="volume"
+                            stroke="var(--chart-1)"
+                            fill="var(--chart-1)"
+                            fillOpacity={0.3}
+                          />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -292,12 +390,21 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
                 )}
                 <div className="mt-3 space-y-2">
                   {entri.map((e) => (
-                    <div key={e.id} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-xs">
+                    <div
+                      key={e.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-xs"
+                    >
                       <span>
                         <span className="font-bold text-foreground">Hari {e.hari}</span>
-                        <span className="ml-2 text-muted-foreground">D50 {e.estimasiDroplet} mikron, homogenitas {e.homogenitas} persen</span>
+                        <span className="ml-2 text-muted-foreground">
+                          D50 {e.estimasiDroplet} mikron, homogenitas {e.homogenitas} persen
+                        </span>
                       </span>
-                      <button onClick={() => hapus(e.id)} className="text-muted-foreground hover:text-danger" title="Hapus foto droplet">
+                      <button
+                        onClick={() => hapus(e.id)}
+                        className="text-muted-foreground hover:text-danger"
+                        title="Hapus foto droplet"
+                      >
                         <Trash2 className="size-4" />
                       </button>
                     </div>
@@ -309,30 +416,79 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
 
           <div className="border-t border-border pt-4">
             <PrimaryButton onClick={jalankanPrediksi} disabled={!terakhir || menganalisis}>
-              {menganalisis ? <Loader2 className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
-              {menganalisis ? "AI menganalisis citra, formula, dan timeframe" : "Mulai jalankan uji prediktif stabilitas"}
+              {menganalisis ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <BrainCircuit className="size-4" />
+              )}
+              {menganalisis
+                ? "AI menganalisis citra, formula, dan timeframe"
+                : "Mulai jalankan uji prediktif stabilitas"}
             </PrimaryButton>
-            {menganalisis && <div className="mt-3 h-1.5 overflow-hidden bg-secondary"><span className="block h-full w-2/3 animate-pulse bg-brand" /></div>}
+            {menganalisis && (
+              <div className="mt-3 h-1.5 overflow-hidden bg-secondary">
+                <span className="block h-full w-2/3 animate-pulse bg-brand" />
+              </div>
+            )}
           </div>
 
           {prediksi && (
             <div className="space-y-4 border-t border-border pt-4">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <MiniPrediksi label="Shelf life proyeksi" nilai={prediksi.shelfLifeBulan + " bulan"} />
+                <MiniPrediksi
+                  label="Shelf life proyeksi"
+                  nilai={prediksi.shelfLifeBulan + " bulan"}
+                />
                 <MiniPrediksi label="Risiko pecah emulsi" nilai={prediksi.risikoPecah + "%"} />
-                <MiniPrediksi label="Risiko perubahan warna" nilai={prediksi.risikoPerubahanWarna + "%"} />
-                <MiniPrediksi label="Interaksi bahan aktif" nilai={prediksi.risikoInteraksiAktif + "%"} />
+                <MiniPrediksi
+                  label="Risiko perubahan warna"
+                  nilai={prediksi.risikoPerubahanWarna + "%"}
+                />
+                <MiniPrediksi
+                  label="Interaksi bahan aktif"
+                  nilai={prediksi.risikoInteraksiAktif + "%"}
+                />
               </div>
               <p className="text-sm text-foreground">{prediksi.ringkasan}</p>
-              <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">{prediksi.mitigasi.map((m) => <li key={m}>{m}</li>)}</ul>
+              <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                {prediksi.mitigasi.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Checkpoint stabilitas yang diusulkan</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Checkpoint stabilitas yang diusulkan
+                </p>
                 <div className="mt-2 overflow-x-auto">
                   <table className="table-clear w-full text-sm">
-                    <thead><tr><th>Minggu</th><th>pH</th><th>Viskositas</th><th>Penampilan</th><th>Status</th><th>Aksi</th></tr></thead>
-                    <tbody>{(batch.checkpoints ?? []).map((c) => (
-                      <tr key={c.minggu}><td>{c.minggu}</td><td>{c.ph}</td><td>{c.viskositasCp} cP</td><td>{c.penampilan.replaceAll("_", " ")}</td><td>{c.dikonfirmasi ? "Dikonfirmasi" : "Usulan AI"}</td><td>{!c.dikonfirmasi && <GhostButton onClick={() => konfirmasiCheckpoint(c.minggu)}><UserCheck className="size-4" /> Konfirmasi</GhostButton>}</td></tr>
-                    ))}</tbody>
+                    <thead>
+                      <tr>
+                        <th>Minggu</th>
+                        <th>pH</th>
+                        <th>Viskositas</th>
+                        <th>Penampilan</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(batch.checkpoints ?? []).map((c) => (
+                        <tr key={c.minggu}>
+                          <td>{c.minggu}</td>
+                          <td>{c.ph}</td>
+                          <td>{c.viskositasCp} cP</td>
+                          <td>{c.penampilan.replaceAll("_", " ")}</td>
+                          <td>{c.dikonfirmasi ? "Dikonfirmasi" : "Usulan AI"}</td>
+                          <td>
+                            {!c.dikonfirmasi && (
+                              <GhostButton onClick={() => konfirmasiCheckpoint(c.minggu)}>
+                                <UserCheck className="size-4" /> Konfirmasi
+                              </GhostButton>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -346,5 +502,10 @@ export function UjiSampelStabilitas({ proyek, batch, peneliti }: Props) {
 }
 
 function MiniPrediksi({ label, nilai }: { label: string; nilai: string }) {
-  return <div className="border border-border bg-secondary/50 p-3 text-center"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 font-display text-lg font-semibold text-foreground">{nilai}</p></div>;
+  return (
+    <div className="border border-border bg-secondary/50 p-3 text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 font-display text-lg font-semibold text-foreground">{nilai}</p>
+    </div>
+  );
 }

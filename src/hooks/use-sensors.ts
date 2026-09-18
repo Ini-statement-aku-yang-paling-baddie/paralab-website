@@ -27,17 +27,29 @@ export function useSensors(riwayatMaks = 40) {
     SENSORS.map((s) => ({ id: s.id, nilai: s.base, status: statusSensor(s, s.base) })),
   );
   const [riwayat, setRiwayat] = useState<SensorFrame[]>([]);
-  const nilaiRef = useRef<Record<string, number>>(Object.fromEntries(SENSORS.map((s) => [s.id, s.base])));
+  const nilaiRef = useRef<Record<string, number>>(
+    Object.fromEntries(SENSORS.map((s) => [s.id, s.base])),
+  );
 
   useEffect(() => {
     const tick = () => {
       const next: Record<string, number> = {};
       for (const s of SENSORS) next[s.id] = langkah(nilaiRef.current[s.id] ?? s.base, s);
       nilaiRef.current = next;
-      setReadings(SENSORS.map((s) => ({ id: s.id, nilai: next[s.id]!, status: statusSensor(s, next[s.id]!) })));
+      setReadings(
+        SENSORS.map((s) => ({
+          id: s.id,
+          nilai: next[s.id]!,
+          status: statusSensor(s, next[s.id]!),
+        })),
+      );
       setRiwayat((prev) => {
         const frame: SensorFrame = {
-          waktu: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+          waktu: new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          }),
           nilai: next,
         };
         return [...prev, frame].slice(-riwayatMaks);

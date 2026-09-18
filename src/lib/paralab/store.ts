@@ -111,7 +111,12 @@ export const actions = {
   tambahProyek(p: Project) {
     state = { ...state, projects: [p, ...state.projects] };
     emit();
-    actions.catat(p.peneliti, p.judul, "Jurnal baru", "Jurnal penelitian dibuat dari usulan formula AI");
+    actions.catat(
+      p.peneliti,
+      p.judul,
+      "Jurnal baru",
+      "Jurnal penelitian dibuat dari usulan formula AI",
+    );
   },
   perbaruiProyek(id: string, ubah: (p: Project) => Project) {
     state = { ...state, projects: state.projects.map((p) => (p.id === id ? ubah(p) : p)) };
@@ -125,7 +130,11 @@ export const actions = {
     }));
   },
   tambahBatch(projectId: string, batch: Batch) {
-    actions.perbaruiProyek(projectId, (p) => ({ ...p, update: new Date().toISOString(), batches: [...p.batches, batch] }));
+    actions.perbaruiProyek(projectId, (p) => ({
+      ...p,
+      update: new Date().toISOString(),
+      batches: [...p.batches, batch],
+    }));
   },
   catat(peneliti: string, proyek: string, aksi: string, detail: string, sensor?: string) {
     const entry: LogEntry = {

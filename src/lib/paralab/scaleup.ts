@@ -29,7 +29,11 @@ export type ScaleUpBrief = {
 };
 
 function punya(b: Ingredient[], kata: string[]) {
-  return b.filter((x) => kata.some((k) => (x.golongan + " " + x.name + " " + x.fungsi + " " + x.inci).toLowerCase().includes(k)));
+  return b.filter((x) =>
+    kata.some((k) =>
+      (x.golongan + " " + x.name + " " + x.fungsi + " " + x.inci).toLowerCase().includes(k),
+    ),
+  );
 }
 
 export function susunScaleUpBrief(proyek: Project, batch: Batch): ScaleUpBrief {
@@ -46,9 +50,16 @@ export function susunScaleUpBrief(proyek: Project, batch: Batch): ScaleUpBrief {
   parameter.push({
     parameter: "Viskositas",
     skor: Math.min(95, 28 + polimer.length * 18 + emulsifier.length * 6),
-    arah: polimer.length > 0 ? "Cenderung naik pada skala besar karena waktu hidrasi polimer lebih panjang" : "Relatif stabil, pantau saat pendinginan",
-    pemicu: polimer.length > 0 ? "Hidrasi " + polimer.map((p) => p.name).join(", ") + " tidak seragam pada tangki besar" : "Laju pendinginan lebih lambat pada tangki besar",
-    pengawasan: "Ukur viskositas Brookfield pada 30, 60, dan 120 menit setelah pendinginan mencapai 35 C",
+    arah:
+      polimer.length > 0
+        ? "Cenderung naik pada skala besar karena waktu hidrasi polimer lebih panjang"
+        : "Relatif stabil, pantau saat pendinginan",
+    pemicu:
+      polimer.length > 0
+        ? "Hidrasi " + polimer.map((p) => p.name).join(", ") + " tidak seragam pada tangki besar"
+        : "Laju pendinginan lebih lambat pada tangki besar",
+    pengawasan:
+      "Ukur viskositas Brookfield pada 30, 60, dan 120 menit setelah pendinginan mencapai 35 C",
   });
 
   parameter.push({
@@ -56,7 +67,8 @@ export function susunScaleUpBrief(proyek: Project, batch: Batch): ScaleUpBrief {
     skor: Math.min(95, 30 + minyak.length * 9 + emulsifier.length * 10),
     arah: "Risiko gradien konsentrasi pada bagian atas dan bawah tangki",
     pemicu: "Perbedaan tip speed homogenizer laboratorium dengan mixer produksi",
-    pengawasan: "Ambil sampel tiga titik tangki, bandingkan kadar aktif dan penampilan setiap kenaikan skala",
+    pengawasan:
+      "Ambil sampel tiga titik tangki, bandingkan kadar aktif dan penampilan setiap kenaikan skala",
   });
 
   parameter.push({
@@ -100,36 +112,76 @@ export function susunScaleUpBrief(proyek: Project, batch: Batch): ScaleUpBrief {
   const cogs = hppData.total * 1.18;
 
   const klaim: string[] = [];
-  for (const t of proyek.targets.slice(0, 6)) klaim.push("Klaim " + t.label.toLowerCase() + " dapat dinyatakan bila hasil uji konsisten pada tiga batch berturut turut");
-  if (punya(bahan, ["niacinamide", "vitamin c", "arbutin", "kojic"]).length > 0) klaim.push("Klaim mencerahkan wajib didukung uji efikasi instrumental, bukan klaim memutihkan");
-  if (punya(bahan, ["spf", "zinc", "titanium", "avobenzone"]).length > 0) klaim.push("Nilai SPF dan PA hanya boleh dicantumkan setelah uji in vivo tersertifikasi");
-  klaim.push("Hindari klaim medis seperti menyembuhkan jerawat, gunakan bahasa membantu mengurangi tampakan jerawat");
+  for (const t of proyek.targets.slice(0, 6))
+    klaim.push(
+      "Klaim " +
+        t.label.toLowerCase() +
+        " dapat dinyatakan bila hasil uji konsisten pada tiga batch berturut turut",
+    );
+  if (punya(bahan, ["niacinamide", "vitamin c", "arbutin", "kojic"]).length > 0)
+    klaim.push("Klaim mencerahkan wajib didukung uji efikasi instrumental, bukan klaim memutihkan");
+  if (punya(bahan, ["spf", "zinc", "titanium", "avobenzone"]).length > 0)
+    klaim.push("Nilai SPF dan PA hanya boleh dicantumkan setelah uji in vivo tersertifikasi");
+  klaim.push(
+    "Hindari klaim medis seperti menyembuhkan jerawat, gunakan bahasa membantu mengurangi tampakan jerawat",
+  );
 
   const larangan: LaranganProduksi[] = [];
   if (punya(bahan, ["vitamin c", "ascorb", "retino"]).length > 0) {
-    larangan.push({ judul: "Larangan kemasan bening", isi: "Bahan mudah teroksidasi hadir pada formula. Dilarang menggunakan botol bening tanpa pelindung UV, gunakan kemasan airless opak." });
+    larangan.push({
+      judul: "Larangan kemasan bening",
+      isi: "Bahan mudah teroksidasi hadir pada formula. Dilarang menggunakan botol bening tanpa pelindung UV, gunakan kemasan airless opak.",
+    });
   }
   if (punya(bahan, ["zinc", "titanium", "mineral"]).length > 0) {
-    larangan.push({ judul: "Larangan kontak logam", isi: "Filter mineral bersifat abrasif dan reaktif. Dilarang menggunakan tangki atau impeller berlapis logam tergores, gunakan stainless 316L." });
+    larangan.push({
+      judul: "Larangan kontak logam",
+      isi: "Filter mineral bersifat abrasif dan reaktif. Dilarang menggunakan tangki atau impeller berlapis logam tergores, gunakan stainless 316L.",
+    });
   }
   if (punya(bahan, ["parfum", "alkohol", "essential"]).length > 0) {
-    larangan.push({ judul: "Larangan ruang panas", isi: "Dilarang mendiamkan bulk di ruang dengan suhu di atas 30 C atau terpapar cahaya langsung lebih dari 8 jam sebelum pengisian." });
+    larangan.push({
+      judul: "Larangan ruang panas",
+      isi: "Dilarang mendiamkan bulk di ruang dengan suhu di atas 30 C atau terpapar cahaya langsung lebih dari 8 jam sebelum pengisian.",
+    });
   }
   if (punya(bahan, ["carbomer", "polimer", "gum"]).length > 0) {
-    larangan.push({ judul: "Larangan geser berlebih", isi: "Dilarang menjalankan homogenizer di atas 3500 rpm setelah netralisasi polimer karena struktur gel akan rusak permanen." });
+    larangan.push({
+      judul: "Larangan geser berlebih",
+      isi: "Dilarang menjalankan homogenizer di atas 3500 rpm setelah netralisasi polimer karena struktur gel akan rusak permanen.",
+    });
   }
-  larangan.push({ judul: "Batas waktu tunggu bulk", isi: "Bulk dilarang disimpan lebih dari 48 jam sebelum pengisian. Jika terlampaui, wajib uji ulang pH, viskositas, dan angka lempeng total." });
-  larangan.push({ judul: "Ruang penyimpanan", isi: "Simpan bulk pada ruang terkendali 20 sampai 25 C dengan kelembapan di bawah 60 persen RH dan tekanan positif." });
+  larangan.push({
+    judul: "Batas waktu tunggu bulk",
+    isi: "Bulk dilarang disimpan lebih dari 48 jam sebelum pengisian. Jika terlampaui, wajib uji ulang pH, viskositas, dan angka lempeng total.",
+  });
+  larangan.push({
+    judul: "Ruang penyimpanan",
+    isi: "Simpan bulk pada ruang terkendali 20 sampai 25 C dengan kelembapan di bawah 60 persen RH dan tekanan positif.",
+  });
 
   const tahapan = [
-    { skala: "500 gram, skala laboratorium", catatan: "Formula acuan dan parameter dasar ditetapkan di tahap ini" },
-    { skala: "4 kilogram, skala bangku", catatan: "Verifikasi ulang pH, viskositas, densitas, penampilan, dan homogenitas" },
-    { skala: "50 kilogram, skala pilot", catatan: "Uji kecepatan geser dan waktu proses, ambil sampel tiga titik tangki" },
-    { skala: "500 kilogram, produksi awal", catatan: "Validasi tiga batch berturut turut sebelum produksi rutin" },
+    {
+      skala: "500 gram, skala laboratorium",
+      catatan: "Formula acuan dan parameter dasar ditetapkan di tahap ini",
+    },
+    {
+      skala: "4 kilogram, skala bangku",
+      catatan: "Verifikasi ulang pH, viskositas, densitas, penampilan, dan homogenitas",
+    },
+    {
+      skala: "50 kilogram, skala pilot",
+      catatan: "Uji kecepatan geser dan waktu proses, ambil sampel tiga titik tangki",
+    },
+    {
+      skala: "500 kilogram, produksi awal",
+      catatan: "Validasi tiga batch berturut turut sebelum produksi rutin",
+    },
   ];
 
   const rujukan = [
-    "Pola risiko dipelajari dari arsip proyek organisasi yang pernah naik skala pada kategori " + proyek.kategori,
+    "Pola risiko dipelajari dari arsip proyek organisasi yang pernah naik skala pada kategori " +
+      proyek.kategori,
     "Skor keberlanjutan formula " + sustain.skor + " dari 100, peringkat " + sustain.peringkat,
   ];
 
@@ -142,14 +194,20 @@ export function susunScaleUpBrief(proyek: Project, batch: Batch): ScaleUpBrief {
       " dengan skor " +
       skor +
       " dari 100. Parameter paling mungkin bergeser adalah " +
-      [...parameter].sort((a, b) => b.skor - a.skor).slice(0, 2).map((p) => p.parameter.toLowerCase()).join(" dan ") +
+      [...parameter]
+        .sort((a, b) => b.skor - a.skor)
+        .slice(0, 2)
+        .map((p) => p.parameter.toLowerCase())
+        .join(" dan ") +
       ".",
     parameter: parameter.sort((a, b) => b.skor - a.skor),
     tahapan,
     halal:
       kepatuhan.status === "clear_for_current_screening"
         ? "Tidak ada rule halal prototipe yang aktif pada formula ini. Status ini bukan sertifikasi: verifikasi dokumen pemasok dan audit fasilitas tetap wajib sesuai HAS 23000."
-        : "Skrining prototipe: " + kepatuhan.label + ". Terdapat bahan yang perlu verifikasi sertifikat halal sebelum produksi massal.",
+        : "Skrining prototipe: " +
+          kepatuhan.label +
+          ". Terdapat bahan yang perlu verifikasi sertifikat halal sebelum produksi massal.",
     klaim,
     hpp: [
       { label: "HPP bahan baku per kemasan", nilai: formatRupiah(hppData.per50ml) },
@@ -178,7 +236,19 @@ export function buatScaleUpBriefMarkdown(proyek: Project, batch: Batch) {
     brief.ringkasan,
     "",
     "## Parameter paling rawan berubah saat naik skala",
-    ...brief.parameter.map((p) => "- " + p.parameter + " (" + p.skor + "): " + p.arah + ". Pemicu: " + p.pemicu + ". Pengawasan: " + p.pengawasan),
+    ...brief.parameter.map(
+      (p) =>
+        "- " +
+        p.parameter +
+        " (" +
+        p.skor +
+        "): " +
+        p.arah +
+        ". Pemicu: " +
+        p.pemicu +
+        ". Pengawasan: " +
+        p.pengawasan,
+    ),
     "",
     "## Tahapan kenaikan skala",
     ...brief.tahapan.map((t) => "- " + t.skala + ": " + t.catatan),

@@ -254,12 +254,27 @@ function JurnalDetail() {
       const evaluasi = evaluasiBatch(batch, proyek!.targets, batch.feedback);
       const risiko = batch.prediksiStabilitas;
       if (risiko && risiko.risikoPecah >= 50) {
-        evaluasi.kekurangan.push("Simulasi stabilitas menunjukkan risiko pecah emulsi " + risiko.risikoPecah + "% berdasarkan citra spesimen dan komposisi formula.");
+        evaluasi.kekurangan.push(
+          "Simulasi stabilitas menunjukkan risiko pecah emulsi " +
+            risiko.risikoPecah +
+            "% berdasarkan citra spesimen dan komposisi formula.",
+        );
         evaluasi.rekomendasi.push(...risiko.mitigasi);
         evaluasi.skorKesesuaian = Math.min(evaluasi.skorKesesuaian, 69);
       }
-      actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({ ...b, status: "dievaluasi", evaluasi }));
-      actions.catat(nama, proyek!.judul, "Analisis akhir", "Dashboard, jurnal, feedback, spesimen, dan checkpoint batch " + batch.nomor + " dianalisis");
+      actions.simpanBatch(proyek!.id, batch.nomor, (b) => ({
+        ...b,
+        status: "dievaluasi",
+        evaluasi,
+      }));
+      actions.catat(
+        nama,
+        proyek!.judul,
+        "Analisis akhir",
+        "Dashboard, jurnal, feedback, spesimen, dan checkpoint batch " +
+          batch.nomor +
+          " dianalisis",
+      );
       setMenganalisisAkhir(false);
     }, 2200);
   }
@@ -634,9 +649,61 @@ function JurnalDetail() {
 
       <UjiSampelStabilitas proyek={proyek} batch={batch} peneliti={nama} />
 
-      {batch.spesimenAkhir && <Card className="mt-5"><CardTitle title="Catatan peneliti dan spesimen akhir" sub="Disimpan dari laporan praktikum proyek ini." /><div className="grid gap-4 sm:grid-cols-[12rem_1fr]"><img src={batch.spesimenAkhir.gambar} alt="Spesimen akhir" className="h-40 w-full border border-border object-cover" /><div><p className="text-sm leading-relaxed text-foreground">{batch.feedback || "Belum ada feedback peneliti."}</p><p className="mt-2 text-xs text-muted-foreground">{batch.spesimenAkhir.namaFile}</p></div></div></Card>}
+      {batch.spesimenAkhir && (
+        <Card className="mt-5">
+          <CardTitle
+            title="Catatan peneliti dan spesimen akhir"
+            sub="Disimpan dari laporan praktikum proyek ini."
+          />
+          <div className="grid gap-4 sm:grid-cols-[12rem_1fr]">
+            <img
+              src={batch.spesimenAkhir.gambar}
+              alt="Spesimen akhir"
+              className="h-40 w-full border border-border object-cover"
+            />
+            <div>
+              <p className="text-sm leading-relaxed text-foreground">
+                {batch.feedback || "Belum ada feedback peneliti."}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">{batch.spesimenAkhir.namaFile}</p>
+            </div>
+          </div>
+        </Card>
+      )}
 
-      {batch.timeframeSiap && !batch.evaluasi && <Card className="mt-5"><CardTitle title="Keputusan standar dan analisis lintas bukti" sub="Analisis membaca hasil dashboard, laporan praktikum, feedback, citra spesimen, prediksi stabilitas, dan checkpoint terkonfirmasi." /><p className="mb-4 text-sm font-semibold text-warning">Penelitian Anda belum sesuai standar. Selesaikan uji timeframe dan jalankan analisis untuk menentukan rancangan batch berikutnya.</p><PrimaryButton onClick={analisisAkhir} disabled={!lengkap || !batch.prediksiStabilitas || menganalisisAkhir}>{menganalisisAkhir ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{menganalisisAkhir ? "AI menganalisis seluruh bukti penelitian" : "Analisis hasil dan siapkan rekomendasi"}</PrimaryButton>{menganalisisAkhir && <div className="mt-4 h-1.5 overflow-hidden bg-secondary"><span className="block h-full w-3/4 animate-pulse bg-brand" /></div>}<p className="mt-3 text-xs text-muted-foreground">Lengkapi hasil parameter dan jalankan prediktif stabilitas terlebih dahulu.</p></Card>}
+      {batch.timeframeSiap && !batch.evaluasi && (
+        <Card className="mt-5">
+          <CardTitle
+            title="Keputusan standar dan analisis lintas bukti"
+            sub="Analisis membaca hasil dashboard, laporan praktikum, feedback, citra spesimen, prediksi stabilitas, dan checkpoint terkonfirmasi."
+          />
+          <p className="mb-4 text-sm font-semibold text-warning">
+            Penelitian Anda belum sesuai standar. Selesaikan uji timeframe dan jalankan analisis
+            untuk menentukan rancangan batch berikutnya.
+          </p>
+          <PrimaryButton
+            onClick={analisisAkhir}
+            disabled={!lengkap || !batch.prediksiStabilitas || menganalisisAkhir}
+          >
+            {menganalisisAkhir ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Sparkles className="size-4" />
+            )}
+            {menganalisisAkhir
+              ? "AI menganalisis seluruh bukti penelitian"
+              : "Analisis hasil dan siapkan rekomendasi"}
+          </PrimaryButton>
+          {menganalisisAkhir && (
+            <div className="mt-4 h-1.5 overflow-hidden bg-secondary">
+              <span className="block h-full w-3/4 animate-pulse bg-brand" />
+            </div>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            Lengkapi hasil parameter dan jalankan prediktif stabilitas terlebih dahulu.
+          </p>
+        </Card>
+      )}
 
       {batch.evaluasi && (
         <Card className="mt-5">
@@ -652,7 +719,12 @@ function JurnalDetail() {
             }
           />
           <p className="text-sm text-foreground">{batch.evaluasi.ringkasan}</p>
-          {batch.evaluasi.skorKesesuaian < 70 && <p className="mt-3 border-l-2 border-warning bg-warning-soft/40 p-3 text-sm font-semibold text-foreground">Penelitian Anda belum sesuai standar. Silakan lanjutkan penelitian ke batch {batch.nomor + 1} berdasarkan mitigasi di bawah.</p>}
+          {batch.evaluasi.skorKesesuaian < 70 && (
+            <p className="mt-3 border-l-2 border-warning bg-warning-soft/40 p-3 text-sm font-semibold text-foreground">
+              Penelitian Anda belum sesuai standar. Silakan lanjutkan penelitian ke batch{" "}
+              {batch.nomor + 1} berdasarkan mitigasi di bawah.
+            </p>
+          )}
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">

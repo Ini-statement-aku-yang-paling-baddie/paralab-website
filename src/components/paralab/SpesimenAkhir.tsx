@@ -26,7 +26,9 @@ export function SpesimenAkhir({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-foreground">Spesimen akhir batch</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Dokumentasikan kondisi fisik sampel saat jurnal praktikum ditutup.</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Dokumentasikan kondisi fisik sampel saat jurnal praktikum ditutup.
+          </p>
         </div>
         <GhostButton onClick={() => fileRef.current?.click()}>
           <ImagePlus className="size-4" /> {value ? "Ganti gambar" : "Tambah gambar spesimen akhir"}
@@ -45,11 +47,17 @@ export function SpesimenAkhir({
       />
       {value && (
         <div className="mt-4 grid gap-3 sm:grid-cols-[10rem_1fr]">
-          <img src={value.gambar} alt="Spesimen akhir batch" className="h-32 w-full border border-border object-cover" />
+          <img
+            src={value.gambar}
+            alt="Spesimen akhir batch"
+            className="h-32 w-full border border-border object-cover"
+          />
           <div className="flex min-w-0 items-start justify-between gap-3">
             <div>
               <p className="break-all text-sm font-semibold text-foreground">{value.namaFile}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Tersimpan bersama feedback peneliti.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tersimpan bersama feedback peneliti.
+              </p>
             </div>
             <GhostButton onClick={() => onChange(undefined)}>
               <Trash2 className="size-4" /> Hapus
