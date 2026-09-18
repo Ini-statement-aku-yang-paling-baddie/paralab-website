@@ -15,10 +15,14 @@
 import type { Batch, Ingredient, Project } from "./data";
 import { kategoriDef } from "./catalog";
 import { DOMAIN_DIDUKUNG } from "./kontrak";
-import { MODEL_API_BASE } from "./api";
+import { MODEL_API_BASE, resolveModelApiBase } from "./api";
 
-const BASE_URL =
-  (import.meta.env["VITE_PARALAB_F3_URL"] as string | undefined)?.trim() || MODEL_API_BASE;
+// F3 is served by the same gateway as F1, F2, F4, and F5. Keep its optional
+// override subject to the same production-safe reverse-proxy selection.
+const configuredF3Base = import.meta.env["VITE_PARALAB_F3_URL"] as string | undefined;
+const BASE_URL = configuredF3Base?.trim()
+  ? resolveModelApiBase(configuredF3Base, import.meta.env.DEV)
+  : MODEL_API_BASE;
 
 /* ============================================================
    Kontrak permintaan, sama persis dengan ForecastRequest di api/app.py
