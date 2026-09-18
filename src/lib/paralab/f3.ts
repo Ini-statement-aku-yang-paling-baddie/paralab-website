@@ -15,9 +15,10 @@
 import type { Batch, Ingredient, Project } from "./data";
 import { kategoriDef } from "./catalog";
 import { DOMAIN_DIDUKUNG } from "./kontrak";
+import { MODEL_API_BASE } from "./api";
 
 const BASE_URL =
-  (import.meta.env["VITE_PARALAB_F3_URL"] as string | undefined) ?? "http://127.0.0.1:8000";
+  (import.meta.env["VITE_PARALAB_F3_URL"] as string | undefined)?.trim() || MODEL_API_BASE;
 
 /* ============================================================
    Kontrak permintaan, sama persis dengan ForecastRequest di api/app.py
@@ -269,7 +270,10 @@ export async function jalankanF3(proyek: Project, batch: Batch): Promise<F3Hasil
   try {
     const res = await fetch(BASE_URL + "/v1/f3/forecasts", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
       body: JSON.stringify(permintaan),
     });
     if (!res.ok) {
@@ -361,7 +365,9 @@ export async function cekKesehatanF3(): Promise<
   { ok: true; modelVersion: string; dataOrigin: string; cvStatus: string } | { ok: false }
 > {
   try {
-    const res = await fetch(BASE_URL + "/health");
+    const res = await fetch(BASE_URL + "/health", {
+      headers: { "ngrok-skip-browser-warning": "true" },
+    });
     if (!res.ok) return { ok: false };
     const data = (await res.json()) as Record<string, string>;
     return {

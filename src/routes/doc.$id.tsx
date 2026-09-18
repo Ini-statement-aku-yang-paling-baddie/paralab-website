@@ -332,20 +332,39 @@ function DokumenEditor() {
       </main>
 
       <VoiceLog
+        selectedTrialId={proyek.id + "-batch-" + batch.nomor}
         onTerapkan={(h) => {
-          const waktu = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+          const waktu = new Date().toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
           const baris: string[] = [];
-          for (const b of h.bahan) baris.push("<li>Bahan: " + b.nama + " " + b.persen + " persen</li>");
-          for (const p of h.parameter) baris.push("<li>" + p.label + ": " + p.nilai + " " + p.unit + "</li>");
+          for (const b of h.bahan) {
+            baris.push("<li>Bahan: " + b.nama + " " + b.persen + " persen</li>");
+          }
+          for (const p of h.parameter) {
+            baris.push("<li>" + p.label + ": " + p.nilai + " " + p.unit + "</li>");
+          }
           for (const o of h.observasi) baris.push("<li>Observasi: " + o + "</li>");
-          sisip("<p><strong>Catatan suara pukul " + waktu + "</strong></p><ul>" + baris.join("") + "</ul><p></p>");
+          sisip(
+            "<p><strong>Catatan suara pukul " +
+              waktu +
+              "</strong></p><ul>" +
+              baris.join("") +
+              "</ul><p></p>",
+          );
           if (h.observasi.length > 0) {
             actions.simpanBatch(proyek.id, batch.nomor, (b) => ({
               ...b,
               observasi: (b.observasi ? b.observasi + " " : "") + h.observasi.join(". ") + ".",
             }));
           }
-          actions.catat(user?.nama ?? proyek.peneliti, proyek.judul, "Catatan suara", h.mentah.slice(0, 160));
+          actions.catat(
+            user?.nama ?? proyek.peneliti,
+            proyek.judul,
+            "Catatan suara",
+            h.mentah.slice(0, 160),
+          );
         }}
       />
 
