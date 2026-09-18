@@ -1,12 +1,42 @@
 /**
  * Satu titik panggilan ke model gateway ParaLab.
  *
- * Base URL diatur lewat env var `VITE_MODEL_API_BASE` sehingga host backend
- * (lokal, HF Space, cloud VM, atau tunnel laptop) bisa diganti tanpa mengubah kode.
+ * Dalam production, `/api` diarahkan reverse proxy ke deployment backend. Origin
+ * publik dapat diatur dengan `VITE_MODEL_API_BASE`; localhost hanya fallback dev.
  */
-export const MODEL_API_BASE = (
-  import.meta.env.VITE_MODEL_API_BASE ?? "http://localhost:7860"
-).replace(/\/$/, "");
+const DEVELOPMENT_API_BASE = "http://localhost:7860";
+const PRODUCTION_API_BASE = "/api";
+
+function removeTrailingSlashes(value: string): string {
+  return value.length > 1 ? value.replace(/\/+$/, "") : value;
+}
+
+function isLoopbackOrigin(value: string): boolean {
+  try {
+    const { hostname } = new URL(value);
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
+export function resolveModelApiBase(
+  configuredBase: string | undefined,
+  isDevelopment: boolean,
+): string {
+  const base = configuredBase?.trim();
+
+  if (!base || (!isDevelopment && isLoopbackOrigin(base))) {
+    return isDevelopment ? DEVELOPMENT_API_BASE : PRODUCTION_API_BASE;
+  }
+
+  return removeTrailingSlashes(base);
+}
+
+export const MODEL_API_BASE = resolveModelApiBase(
+  import.meta.env.VITE_MODEL_API_BASE,
+  import.meta.env.DEV,
+);
 
 export class ModelApiError extends Error {
   constructor(

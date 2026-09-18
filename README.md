@@ -40,3 +40,27 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Deployment API configuration
+
+The production browser bundle uses the same-origin path `/api` by default.
+Configure the public reverse proxy to forward `/api/*` to the separately
+deployed ParaLab backend while preserving the rest of the website origin. The
+proxy must remove the `/api` prefix before it forwards requests, because the
+backend routes begin at `/v1/*` and `/health`.
+
+No frontend API URL is required for that setup. To use a different **public**
+API origin, set `VITE_MODEL_API_BASE` at build time, for example:
+
+```sh
+VITE_MODEL_API_BASE=https://api.example.com npm run build
+```
+
+`VITE_PARALAB_F3_URL` is optional and should normally remain unset because F3
+uses the same gateway. If it is set, use a public origin. Production
+`localhost` and `127.0.0.1` values are ignored in favor of `/api` so a local
+development setting cannot be shipped accidentally. For local development,
+put `VITE_MODEL_API_BASE=http://localhost:7860` in untracked `.env.local`.
+
+Only values prefixed with `VITE_` are exposed to the browser. Never put API
+keys, credentials, or backend-only secrets in these variables.
