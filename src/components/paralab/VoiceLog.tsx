@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Mic, MicOff, X } from "lucide-react";
-import { strukturkanUcapan, type UcapanTerstruktur } from "@/lib/paralab/prediksi";
+import { ModelApiError, postJson } from "@/lib/paralab/api";
+import {
+  assertConfirmable,
+  parseF5Draft,
+  toF5Request,
+  toUcapanTerstruktur,
+  type F5Draft,
+} from "@/lib/paralab/f5-adapter";
+import type { UcapanTerstruktur } from "@/lib/paralab/prediksi";
 
 type Pengenal = {
   lang: string;
@@ -8,23 +16,40 @@ type Pengenal = {
   interimResults: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((e: { resultIndex: number; results: { length: number; [i: number]: { 0: { transcript: string }; isFinal: boolean } } }) => void) | null;
+  onresult:
+    | ((e: {
+        resultIndex: number;
+        results: { length: number; [i: number]: { 0: { transcript: string }; isFinal: boolean } };
+      }) => void)
+    | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
 };
 
 function buatPengenal(): Pengenal | null {
   if (typeof window === "undefined") return null;
-  const w = window as unknown as { SpeechRecognition?: new () => Pengenal; webkitSpeechRecognition?: new () => Pengenal };
+  const w = window as unknown as {
+    SpeechRecognition?: new () => Pengenal;
+    webkitSpeechRecognition?: new () => Pengenal;
+  };
   const Kelas = w.SpeechRecognition ?? w.webkitSpeechRecognition;
   return Kelas ? new Kelas() : null;
 }
 
-export function VoiceLog({ onTerapkan }: { onTerapkan: (hasil: UcapanTerstruktur) => void }) {
+type Props = {
+  /** Identitas trial diambil dari halaman jurnal, bukan dari audio atau transkrip. */
+  selectedTrialId: string;
+  onTerapkan: (hasil: UcapanTerstruktur) => void;
+};
+
+export function VoiceLog({ selectedTrialId, onTerapkan }: Props) {
   const [buka, setBuka] = useState(false);
   const [dengar, setDengar] = useState(false);
   const [teks, setTeks] = useState("");
   const [didukung, setDidukung] = useState(true);
+  const [draft, setDraft] = useState<F5Draft | null>(null);
+  const [memuat, setMemuat] = useState(false);
+  const [galat, setGalat] = useState<string | null>(null);
   const ref = useRef<Pengenal | null>(null);
 
   useEffect(() => {
@@ -72,8 +97,83 @@ export function VoiceLog({ onTerapkan }: { onTerapkan: (hasil: UcapanTerstruktur
     }
   }
 
-  const hasil = strukturkanUcapan(teks);
-  const adaIsi = hasil.bahan.length + hasil.parameter.length + hasil.observasi.length > 0;
+  async function buatDraft() {
+    const bersih = teks.trim();
+    if (bersih.length === 0 || memuat) return;
+
+    setMemuat(true);
+    setGalat(null);
+    setDraft(null);
+
+    try {
+      const hasil = await postJson<unknown>(
+        "/v1/f5/transcribe-draft",
+        toF5Request(selectedTrialId, bersih),
+      );
+      const draftTervalidasi = parseF5Draft(hasil);
+      assertConfirmable(draftTervalidasi);
+      if (draftTervalidasi.trial_id !== selectedTrialId) {
+        throw new Error("Draft F5 tidak cocok dengan trial yang dipilih.");
+      }
+      setDraft(draftTervalidasi);
+    } catch (cause) {
+      setDraft(null);
+      setGalat(
+        cause instanceof ModelApiError
+          ? cause.message
+          : cause instanceof Error
+            ? cause.message
+            : "Gateway model tidak dapat dihubungi.",
+      );
+    } finally {
+      setMemuat(false);
+    }
+  }
+
+  function konfirmasi() {
+    if (!draft) return;
+    const draftTervalidasi = parseF5Draft(draft);
+    assertConfirmable(draftTervalidasi);
+    if (draftTervalidasi.trial_id !== selectedTrialId) {
+      setGalat("Draft F5 tidak cocok dengan trial yang dipilih.");
+      return;
+    }
+    onTerapkan(toUcapanTerstruktur(draftTervalidasi, teks.trim()));
+    setDraft(null);
+    setTeks("");
+  }
+
+  function ubahMeasurement(kunci: string, nilai: string) {
+    if (!draft) return;
+    const numberValue = Number(nilai);
+    setDraft({
+      ...draft,
+      proposed_checkpoint_patch: {
+        ...draft.proposed_checkpoint_patch,
+        measurements: {
+          ...draft.proposed_checkpoint_patch.measurements,
+          [kunci]: nilai.trim() === "" ? null : Number.isFinite(numberValue) ? numberValue : null,
+        },
+      },
+    });
+  }
+
+  function ubahObservasi(kunci: string, nilai: string) {
+    if (!draft) return;
+    setDraft({
+      ...draft,
+      proposed_checkpoint_patch: {
+        ...draft.proposed_checkpoint_patch,
+        observations: {
+          ...draft.proposed_checkpoint_patch.observations,
+          [kunci]: nilai.trim() === "" ? null : nilai,
+        },
+      },
+    });
+  }
+
+  const parameter = Object.entries(draft?.proposed_checkpoint_patch.measurements ?? {});
+  const observasi = Object.entries(draft?.proposed_checkpoint_patch.observations ?? {});
 
   return (
     <>
@@ -89,7 +189,7 @@ export function VoiceLog({ onTerapkan }: { onTerapkan: (hasil: UcapanTerstruktur
         <div className="fixed bottom-24 right-6 z-30 w-[22rem] max-w-[calc(100vw-3rem)] rounded-2xl border border-border bg-card p-4 shadow-xl print:hidden">
           <p className="text-sm font-bold text-foreground">Pencatatan suara bebas tangan</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Ucapkan seperti biasa, contoh: tambah 2 persen niacinamide, larutan agak keruh, pH 5.8.
+            Ucapkan seperti biasa, contoh: pH lima koma lima, sampel homogen.
           </p>
 
           <button
@@ -101,71 +201,90 @@ export function VoiceLog({ onTerapkan }: { onTerapkan: (hasil: UcapanTerstruktur
             }
           >
             {dengar ? <MicOff className="size-4" /> : <Mic className="size-4" />}
-            {dengar ? "Berhenti merekam" : didukung ? "Mulai bicara" : "Peramban tidak mendukung suara"}
+            {dengar
+              ? "Berhenti merekam"
+              : didukung
+                ? "Mulai bicara"
+                : "Peramban tidak mendukung suara"}
           </button>
 
           <textarea
             value={teks}
             onChange={(e) => setTeks(e.target.value)}
             rows={3}
-            placeholder={didukung ? "Transkrip langsung muncul di sini dan bisa dikoreksi cepat." : "Ketik catatan di sini untuk distrukturkan."}
+            placeholder={
+              didukung
+                ? "Transkrip langsung muncul di sini dan bisa dikoreksi cepat."
+                : "Ketik catatan di sini untuk dijadikan draft."
+            }
             className="mt-3 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm outline-none focus:border-brand"
           />
 
-          {adaIsi && (
-            <div className="mt-3 space-y-2 rounded-xl bg-secondary p-3 text-xs">
-              {hasil.bahan.length > 0 && (
-                <div>
-                  <p className="font-bold text-foreground">Bahan terdeteksi</p>
-                  <ul className="mt-1 space-y-0.5 text-muted-foreground">
-                    {hasil.bahan.map((b, i) => (
-                      <li key={i}>
-                        {b.nama} {b.persen} persen {b.id ? "" : "(belum ada di basis data)"}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {hasil.parameter.length > 0 && (
-                <div>
-                  <p className="font-bold text-foreground">Parameter terdeteksi</p>
-                  <ul className="mt-1 space-y-0.5 text-muted-foreground">
-                    {hasil.parameter.map((p, i) => (
-                      <li key={i}>
-                        {p.label}: {p.nilai} {p.unit}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {hasil.observasi.length > 0 && (
-                <div>
-                  <p className="font-bold text-foreground">Observasi</p>
-                  <ul className="mt-1 space-y-0.5 text-muted-foreground">
-                    {hasil.observasi.map((o, i) => (
-                      <li key={i}>{o}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+          <button
+            onClick={() => void buatDraft()}
+            disabled={teks.trim().length === 0 || memuat}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl brand-gradient px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            <Check className="size-4" />
+            {memuat ? "Membuat draft…" : "Buat draft"}
+          </button>
+
+          {galat && (
+            <p className="mt-3 rounded-xl border border-danger/40 bg-danger-soft px-3 py-2 text-xs text-danger">
+              {galat}
+            </p>
           )}
 
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={() => {
-                onTerapkan(hasil);
-                setTeks("");
-              }}
-              disabled={!adaIsi}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl brand-gradient px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-            >
-              <Check className="size-4" /> Masukkan ke jurnal
-            </button>
-            <button onClick={() => setTeks("")} className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-muted-foreground">
-              Bersihkan
-            </button>
-          </div>
+          {draft && (
+            <div className="mt-3 space-y-2 rounded-xl border border-border p-3">
+              <p className="text-xs font-bold text-foreground">
+                Draft untuk trial {draft.trial_id}
+              </p>
+              <p className="text-xs font-medium text-warning">
+                Draft belum masuk ke jurnal. Periksa lalu konfirmasi.
+              </p>
+
+              {parameter.length > 0 && (
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  {parameter.map(([kunci, nilai]) => (
+                    <label key={kunci} className="block">
+                      {kunci}
+                      <input
+                        aria-label={`Measurement ${kunci}`}
+                        type="number"
+                        value={nilai ?? ""}
+                        onChange={(event) => ubahMeasurement(kunci, event.target.value)}
+                        className="ml-2 w-20 rounded border border-input bg-card px-1 py-0.5"
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              {observasi.length > 0 && (
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  {observasi.map(([kunci, nilai]) => (
+                    <label key={kunci} className="block">
+                      {kunci}
+                      <input
+                        aria-label={`Observation ${kunci}`}
+                        value={nilai ?? ""}
+                        onChange={(event) => ubahObservasi(kunci, event.target.value)}
+                        className="ml-2 w-40 rounded border border-input bg-card px-1 py-0.5"
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={konfirmasi}
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl brand-gradient px-3 py-2 text-sm font-semibold text-primary-foreground"
+              >
+                <Check className="size-4" /> Konfirmasi dan masukkan ke jurnal
+              </button>
+            </div>
+          )}
         </div>
       )}
     </>
